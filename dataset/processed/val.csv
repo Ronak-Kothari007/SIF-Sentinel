@@ -1,0 +1,9 @@
+report_id,report_text,sif_precursor,activity,hazard,barrier,location,severity,source
+SYN-024,Fire extinguisher inspection completed. All units charged and serviceable. Tags updated. No issues found.,0,inspection,fire,controls_in_place,process_area,low,synthetic
+SYN-038,"During pipe blasting operations, no exclusion zone was established. Projectile fragments were observed landing near other workers who were unaware of the activity.",1,blasting,struck_by,exclusion_zone_absent,pipe_yard,critical,synthetic
+SYN-012,Gas testing was performed before entering the vessel. All readings were within safe limits. Entry permit was signed by the area authority. Attendant was present throughout.,0,vessel_entry,confined_space,controls_in_place,separator_vessel,medium,synthetic
+SYN-046,Bystander caught in the swing radius of a crane boom. Operator was unaware. No exclusion zone had been set up. Near miss — worker stepped back in time.,1,crane_operation,struck_by,exclusion_zone_absent,laydown_yard,high,synthetic
+SYN-040,Isolation not verified before opening pressurised line. Worker received chemical burn when line was opened. Permit to work had not been raised for the task.,1,piping_maintenance,chemical_burn,isolation_absent,process_plant,critical,synthetic
+SYN-031,Gas test not performed before confined space entry into the manhole. Permit was missing. Worker collapsed inside due to oxygen deficiency.,1,drainage_maintenance,asphyxiation,gas_test_absent,drainage_manhole,critical,synthetic
+SYN-010,Toolbox meeting was conducted at the start of shift. All workers signed attendance sheet. JSA was reviewed and all hazards discussed. No incidents to report.,0,pre_task,none,controls_in_place,drill_site,low,synthetic
+SYN-020,Electrical panel was found open and unguarded in a wet area. No lock was present. An untrained worker was seen near the exposed terminals with bare hands.,1,electrical,electrocution,guarding_absent,pump_room,critical,synthetic

@@ -1,0 +1,223 @@
+version: "2.0"
+description: >
+  SIF Sentinel - Deterministic Safety Rule Engine Configuration.
+  Each rule encodes a well-known SIF (Serious Injury and Fatality) precursor
+  category used in oil and gas operations.
+  Rules are evaluated by case-insensitive substring matching of signal phrases
+  against report text. This layer is fully deterministic and requires no ML model.
+last_updated: "2026-09-11"
+author: "Team 6Bits - SIH26165"
+schema_version: 2
+
+# Severity scale:
+# 1 = LOW      - informational, no immediate action
+# 2 = MEDIUM   - monitor, schedule review
+# 3 = HIGH     - HSE review required before work resumes
+# 4 = CRITICAL - immediate escalation, stop work authority
+
+rules:
+
+  # RULE_001: Energy Isolation
+  - id: RULE_001
+    name: "Energy Isolation Failure"
+    category: "Energy Isolation"
+    severity: 4
+    conditions:
+      - "energized equipment present or accessed without isolation"
+      - "LOTO not applied or not followed"
+      - "isolation not verified before work"
+      - "working on live electrical or mechanical systems"
+    signals:
+      - "loto not applied"
+      - "loto not followed"
+      - "lockout not applied"
+      - "tagout not applied"
+      - "lockout tagout not"
+      - "isolation not verified"
+      - "energy not isolated"
+      - "not de-energized"
+      - "energized equipment"
+      - "live wire"
+      - "live circuit"
+      - "working on live"
+      - "breaker not locked"
+      - "energy source not"
+      - "isolation failure"
+      - "loto not performed"
+      - "no loto"
+      - "no lockout"
+      - "no tagout"
+      - "without isolation"
+      - "energy isolation"
+    explanation: >
+      Failure to isolate hazardous energy (electrical, mechanical, thermal,
+      or hydraulic) before commencing work is a CRITICAL SIF precursor.
+      Uncontrolled energy release can cause electrocution, crush injuries,
+      or explosions. LOTO procedures must be verified and documented before
+      any work on or near hazardous energy sources begins.
+    reference: "OSHA 29 CFR 1910.147 - Control of Hazardous Energy (LOTO)"
+
+  # RULE_002: Confined Space
+  - id: RULE_002
+    name: "Confined Space Entry Without Controls"
+    category: "Confined Space"
+    severity: 4
+    conditions:
+      - "confined space entry detected"
+      - "gas or atmospheric testing absent or not performed"
+      - "entry permit missing"
+      - "no attendant or standby outside"
+    signals:
+      - "confined space"
+      - "gas testing not performed"
+      - "gas testing absent"
+      - "gas test not done"
+      - "gas test absent"
+      - "no gas test"
+      - "atmospheric testing not performed"
+      - "atmospheric testing absent"
+      - "atmospheric test absent"
+      - "atmospheric monitoring absent"
+      - "permit not obtained"
+      - "permit missing"
+      - "permit absent"
+      - "without permit"
+      - "no permit"
+      - "no attendant"
+      - "attendant absent"
+      - "no rescue plan"
+      - "without standby"
+      - "entry without"
+      - "manhole"
+      - "tank entry"
+      - "vessel entry"
+    explanation: >
+      Confined space entry without proper atmospheric testing, a valid entry
+      permit, or a designated attendant is a CRITICAL SIF precursor.
+      Asphyxiation, toxic gas exposure (H2S, CO), and engulfment are leading
+      causes of fatalities in confined space incidents. Every entry requires
+      a completed permit, continuous atmospheric monitoring, and a trained
+      attendant stationed outside at all times.
+    reference: "OSHA 29 CFR 1910.146 - Permit-Required Confined Spaces"
+
+  # RULE_003: Working at Height
+  - id: RULE_003
+    name: "Working at Height Without Fall Protection"
+    category: "Working at Height"
+    severity: 3
+    conditions:
+      - "working at height or elevated position"
+      - "fall protection absent or not used"
+      - "harness not used or missing"
+      - "guardrail missing or absent"
+    signals:
+      - "working at height"
+      - "work at height"
+      - "fall protection absent"
+      - "fall protection not used"
+      - "fall protection missing"
+      - "fall protection not provided"
+      - "harness not used"
+      - "without harness"
+      - "no harness"
+      - "harness absent"
+      - "not wearing harness"
+      - "harness not worn"
+      - "guardrail missing"
+      - "guardrail absent"
+      - "no guardrail"
+      - "no safety net"
+      - "unprotected edge"
+      - "ladder unsafe"
+      - "elevated work"
+      - "working at elevation"
+      - "roof work"
+      - "scaffold work"
+      - "fall hazard"
+    explanation: >
+      Falls from height are a leading cause of serious injuries and fatalities
+      in oil and gas operations. Absence of fall protection systems (full-body
+      harness, guardrails, safety nets) when working above 2 metres constitutes
+      a HIGH SIF precursor requiring immediate HSE review. All elevated work
+      must have a documented fall protection plan before commencement.
+    reference: "OSHA 29 CFR 1926.502 - Fall Protection Systems Criteria"
+
+  # RULE_004: Hot Work
+  - id: RULE_004
+    name: "Hot Work Without Adequate Controls"
+    category: "Hot Work"
+    severity: 3
+    conditions:
+      - "welding, cutting, or hot work activity present"
+      - "fire watch absent or not stationed"
+      - "hot work permit absent or not obtained"
+      - "flammable or combustible materials present without clearance"
+    signals:
+      - "hot work"
+      - "welding"
+      - "cutting"
+      - "grinding"
+      - "open flame"
+      - "fire watch absent"
+      - "fire watch not present"
+      - "fire watch not stationed"
+      - "no fire watch"
+      - "fire watch missing"
+      - "flammable material"
+      - "combustible material"
+      - "gas not cleared"
+      - "hydrocarbon present"
+      - "hot work permit"
+      - "ignition source"
+      - "permit absent"
+      - "permit missing"
+      - "no permit"
+    explanation: >
+      Hot work (welding, cutting, grinding, open flame) in the presence of
+      flammable or combustible materials without adequate controls is a HIGH
+      SIF precursor. Ignition of accumulated hydrocarbons during hot work has
+      caused multiple fatal incidents in the oil and gas industry. A valid
+      hot work permit, continuous gas monitoring, and an active fire watch
+      are mandatory before any hot work begins.
+    reference: "NFPA 51B - Standard for Fire Prevention During Welding, Cutting and Other Hot Work"
+
+  # RULE_005: Line of Fire
+  - id: RULE_005
+    name: "Line of Fire Exposure"
+    category: "Line of Fire"
+    severity: 3
+    conditions:
+      - "worker in line of fire struck-by or caught-between hazard"
+      - "exclusion zone missing or not enforced"
+      - "overhead or suspended load with workers beneath"
+      - "barricade absent"
+    signals:
+      - "line of fire"
+      - "struck by"
+      - "struck-by"
+      - "caught between"
+      - "caught-between"
+      - "exclusion zone not"
+      - "no exclusion zone"
+      - "exclusion zone missing"
+      - "exclusion zone absent"
+      - "in the path"
+      - "below the load"
+      - "under the load"
+      - "dropped object"
+      - "swinging load"
+      - "overhead load"
+      - "path of travel"
+      - "barricade absent"
+      - "no barricade"
+      - "barricade missing"
+      - "falling object"
+      - "projectile"
+    explanation: >
+      Being in the line of fire (struck-by, caught-between) is a top-ranked
+      SIF precursor category in global oil and gas safety statistics. Workers
+      positioned below suspended loads, within equipment swing radius, or in
+      areas without established exclusion zones face immediate life-threatening
+      risk. Exclusion zones and physical barriers must be established and
+      enforced before any lifting or mechanical operations begin.
+    reference: "IOGP Report 459 - Life Saving Rules"

@@ -1,0 +1,59 @@
+{
+  "schema_version": "1.0",
+  "generated_at": "2026-09-11T11:22:27.785461+00:00",
+  "input_file": "C:\\Users\\ronak\\OneDrive\\Desktop\\SIF-Sentinel\\dataset\\raw\\synthetic_sample.csv",
+  "output_dir": "C:\\Users\\ronak\\OneDrive\\Desktop\\SIF-Sentinel\\dataset\\processed",
+  "seed": 42,
+  "ratios": {
+    "train": 0.7,
+    "val": 0.15,
+    "test": 0.15
+  },
+  "n_raw": 50,
+  "n_after_dedup": 50,
+  "n_duplicates_removed": 0,
+  "splits": {
+    "train": {
+      "n": 34,
+      "pct": 68.0,
+      "class_distribution": {
+        "0": 15,
+        "1": 19
+      },
+      "source_distribution": {
+        "synthetic": 34
+      }
+    },
+    "val": {
+      "n": 8,
+      "pct": 16.0,
+      "class_distribution": {
+        "0": 3,
+        "1": 5
+      },
+      "source_distribution": {
+        "synthetic": 8
+      }
+    },
+    "test": {
+      "n": 8,
+      "pct": 16.0,
+      "class_distribution": {
+        "0": 3,
+        "1": 5
+      },
+      "source_distribution": {
+        "synthetic": 8
+      }
+    }
+  },
+  "overlap_checks": {
+    "train_test_text_overlap": 0,
+    "train_val_text_overlap": 0
+  },
+  "output_files": {
+    "train": "C:\\Users\\ronak\\OneDrive\\Desktop\\SIF-Sentinel\\dataset\\processed\\train.csv",
+    "val": "C:\\Users\\ronak\\OneDrive\\Desktop\\SIF-Sentinel\\dataset\\processed\\val.csv",
+    "test": "C:\\Users\\ronak\\OneDrive\\Desktop\\SIF-Sentinel\\dataset\\processed\\test.csv"
+  }
+}

@@ -1,0 +1,21 @@
+# FastAPI and server
+fastapi==0.115.5
+uvicorn[standard]==0.32.1
+
+# Pydantic (data validation — bundled with FastAPI but pinning for clarity)
+pydantic==2.10.3
+pydantic-settings==2.6.1
+
+# HTTP testing
+httpx==0.28.1
+
+# Testing
+pytest==8.3.4
+pytest-asyncio==0.24.0
+
+# Database & Persistence (SQLAlchemy)
+sqlalchemy>=2.0.0
+alembic>=1.13.0
+
+# Utilities
+python-dotenv==1.0.1

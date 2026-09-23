@@ -1,0 +1,104 @@
+version: "1.0"
+description: >
+  SIF Sentinel — Transparent Decision Engine Configuration.
+  Defines the weighted composite prioritization formula, risk multipliers,
+  barrier failure penalties, priority thresholds, and safety escalation policies.
+  Note: Prioritization scores triage reports for HSE review and do NOT predict accidents.
+last_updated: "2026-09-11"
+schema_version: 1
+
+# ---------------------------------------------------------------------------
+# Scoring Factor Weights
+# ---------------------------------------------------------------------------
+# When recurring_risk_signal is provided, weights sum to 1.0.
+# When recurring_risk_signal is omitted, other weights are automatically renormalized.
+weights:
+  model_probability: 0.30     # NLP / ML classifier SIF precursor probability (0.0–1.0)
+  rule_severity: 0.25         # Deterministic safety rule engine max severity (0.0–1.0)
+  barrier_failure: 0.20       # Barrier gap / status severity (0.0–1.0)
+  critical_hazard: 0.15       # Consequence multiplier of detected hazard (0.0–1.0)
+  critical_activity: 0.10     # Consequence multiplier of work activity (0.0–1.0)
+  recurring_pattern: 0.10     # Frequency or similarity to known recurring precursor patterns
+
+# ---------------------------------------------------------------------------
+# Hazard Consequence Multipliers (0.0 to 1.0)
+# Based on IOGP / OSHA high-consequence Life-Saving Rules
+# ---------------------------------------------------------------------------
+hazard_multipliers:
+  "Electrical Energy": 1.00
+  "Toxic Gas / H2S": 1.00
+  "Fall from Height": 0.95
+  "Fire / Explosion": 1.00
+  "Asphyxiation": 1.00
+  "High Pressure Release": 0.90
+  "Struck-By": 0.85
+  "Caught Between": 0.85
+  "Structural Failure": 0.80
+  "Chemical Exposure": 0.75
+  "Slip / Trip / Fall": 0.30
+  "default": 0.40
+
+# ---------------------------------------------------------------------------
+# Activity Consequence Multipliers (0.0 to 1.0)
+# High-energy / permitted operational tasks carry higher consequence baseline
+# ---------------------------------------------------------------------------
+activity_multipliers:
+  "Confined Space Entry": 1.00
+  "Hot Work": 0.95
+  "Welding": 0.90
+  "Cutting": 0.90
+  "Working at Height": 0.90
+  "Lifting & Rigging": 0.85
+  "Drilling": 0.85
+  "Maintenance": 0.80
+  "Pipe Fitting": 0.75
+  "Excavation": 0.70
+  "Painting & Blasting": 0.60
+  "Driving & Logistics": 0.55
+  "Inspection & Audit": 0.35
+  "Pre-task Briefing": 0.15
+  "Housekeeping": 0.15
+  "default": 0.40
+
+# ---------------------------------------------------------------------------
+# Barrier Status Penalties (0.0 to 1.0)
+# Higher score represents greater barrier compromise / safety defense void
+# ---------------------------------------------------------------------------
+barrier_status_scores:
+  "Not Verified": 1.00        # Critical defect: unverified barrier in hazardous area
+  "Failed": 0.95              # Barrier was present but failed or compromised
+  "Absent": 0.90              # Required safeguard was not deployed or omitted
+  "Unknown": 0.40             # Status unclear from report text
+  "Present": 0.05             # Barrier confirmed intact, functional, and verified
+  "default": 0.40
+
+# ---------------------------------------------------------------------------
+# Priority Threshold Bands
+# ---------------------------------------------------------------------------
+priority_thresholds:
+  HIGH: 0.65                  # Requires immediate HSE review and intervention
+  MEDIUM: 0.35                # Scheduled monitoring and supervisor verification
+  LOW: 0.00                   # Standard housekeeping / administrative logging
+
+# ---------------------------------------------------------------------------
+# Safety Escalation Policies (Override rules for high-consequence edge cases)
+# ---------------------------------------------------------------------------
+escalation_policies:
+  # If any deterministic rule with severity 4 (CRITICAL) fires, escalate to HIGH
+  escalate_on_critical_rule: true
+
+  # If a critical hazard (multiplier >= 0.95) has barrier Not Verified or Absent, escalate to HIGH
+  escalate_on_critical_barrier_failure: true
+
+  # Minimum model probability to trigger MEDIUM if no rules fired
+  model_medium_threshold: 0.60
+
+  # Minimum model probability to trigger HIGH independently
+  model_high_threshold: 0.85
+
+# ---------------------------------------------------------------------------
+# HSE Governance Disclaimer
+# ---------------------------------------------------------------------------
+governance_notice: >
+  SIF Sentinel scores are prioritized rankings for HSE management and incident review triage.
+  They do not forecast, predict, or guarantee the occurrence of future injuries or accidents.

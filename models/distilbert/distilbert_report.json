@@ -1,0 +1,285 @@
+{
+  "schema_version": "1.0",
+  "phase": "5-distilbert",
+  "generated_at": "2026-09-11T15:14:51.186404+00:00",
+  "model": {
+    "base_model": "distilbert-base-uncased",
+    "num_labels": 2,
+    "max_length": 256,
+    "freeze_base": false,
+    "trainable_params": 66955010,
+    "total_params": 66955010
+  },
+  "training": {
+    "epochs_run": 8,
+    "epochs_max": 10,
+    "lr": 2e-05,
+    "batch_size": 8,
+    "optimizer": "AdamW",
+    "scheduler": "linear_warmup",
+    "warmup_steps": 5,
+    "weight_decay": 0.01,
+    "class_weights": {
+      "Non-SIF": 1.1333,
+      "SIF": 0.8947
+    },
+    "early_stopping_patience": 3,
+    "best_epoch": 5,
+    "best_val_f2": 0.9615,
+    "device": "cpu",
+    "seed": 42
+  },
+  "classification_threshold": 0.5,
+  "primary_metric": "f2_score",
+  "data": {
+    "train_path": "C:\\Users\\ronak\\OneDrive\\Desktop\\SIF-Sentinel\\dataset\\processed\\train.csv",
+    "val_path": "C:\\Users\\ronak\\OneDrive\\Desktop\\SIF-Sentinel\\dataset\\processed\\val.csv",
+    "test_path": "C:\\Users\\ronak\\OneDrive\\Desktop\\SIF-Sentinel\\dataset\\processed\\test.csv",
+    "n_train": 34,
+    "n_val": 8,
+    "n_test": 8
+  },
+  "train_metrics": {
+    "split": "train",
+    "n_samples": 34,
+    "n_positive": 19,
+    "n_negative": 15,
+    "threshold_used": 0.5,
+    "metrics": {
+      "precision": 0.95,
+      "recall": 1.0,
+      "f1_score": 0.9744,
+      "f2_score": 0.9896,
+      "roc_auc": 1.0
+    },
+    "confusion_matrix": {
+      "raw": [
+        [
+          14,
+          1
+        ],
+        [
+          0,
+          19
+        ]
+      ],
+      "labels": [
+        "Non-SIF (0)",
+        "SIF Precursor (1)"
+      ],
+      "tn": 14,
+      "fp": 1,
+      "fn": 0,
+      "tp": 19
+    },
+    "classification_report": {
+      "Non-SIF (0)": {
+        "precision": 1.0,
+        "recall": 0.9333333333333333,
+        "f1-score": 0.9655172413793104,
+        "support": 15.0
+      },
+      "SIF Precursor (1)": {
+        "precision": 0.95,
+        "recall": 1.0,
+        "f1-score": 0.9743589743589743,
+        "support": 19.0
+      },
+      "accuracy": 0.9705882352941176,
+      "macro avg": {
+        "precision": 0.975,
+        "recall": 0.9666666666666667,
+        "f1-score": 0.9699381078691424,
+        "support": 34.0
+      },
+      "weighted avg": {
+        "precision": 0.9720588235294116,
+        "recall": 0.9705882352941176,
+        "f1-score": 0.9704582098091227,
+        "support": 34.0
+      }
+    }
+  },
+  "val_metrics": {
+    "split": "val",
+    "n_samples": 8,
+    "n_positive": 5,
+    "n_negative": 3,
+    "threshold_used": 0.5,
+    "metrics": {
+      "precision": 0.8333,
+      "recall": 1.0,
+      "f1_score": 0.9091,
+      "f2_score": 0.9615,
+      "roc_auc": 0.9333
+    },
+    "confusion_matrix": {
+      "raw": [
+        [
+          2,
+          1
+        ],
+        [
+          0,
+          5
+        ]
+      ],
+      "labels": [
+        "Non-SIF (0)",
+        "SIF Precursor (1)"
+      ],
+      "tn": 2,
+      "fp": 1,
+      "fn": 0,
+      "tp": 5
+    },
+    "classification_report": {
+      "Non-SIF (0)": {
+        "precision": 1.0,
+        "recall": 0.6666666666666666,
+        "f1-score": 0.8,
+        "support": 3.0
+      },
+      "SIF Precursor (1)": {
+        "precision": 0.8333333333333334,
+        "recall": 1.0,
+        "f1-score": 0.9090909090909091,
+        "support": 5.0
+      },
+      "accuracy": 0.875,
+      "macro avg": {
+        "precision": 0.9166666666666667,
+        "recall": 0.8333333333333333,
+        "f1-score": 0.8545454545454545,
+        "support": 8.0
+      },
+      "weighted avg": {
+        "precision": 0.8958333333333334,
+        "recall": 0.875,
+        "f1-score": 0.8681818181818182,
+        "support": 8.0
+      }
+    }
+  },
+  "test_metrics": {
+    "split": "test",
+    "n_samples": 8,
+    "n_positive": 5,
+    "n_negative": 3,
+    "threshold_used": 0.5,
+    "metrics": {
+      "precision": 0.8333,
+      "recall": 1.0,
+      "f1_score": 0.9091,
+      "f2_score": 0.9615,
+      "roc_auc": 0.8667
+    },
+    "confusion_matrix": {
+      "raw": [
+        [
+          2,
+          1
+        ],
+        [
+          0,
+          5
+        ]
+      ],
+      "labels": [
+        "Non-SIF (0)",
+        "SIF Precursor (1)"
+      ],
+      "tn": 2,
+      "fp": 1,
+      "fn": 0,
+      "tp": 5
+    },
+    "classification_report": {
+      "Non-SIF (0)": {
+        "precision": 1.0,
+        "recall": 0.6666666666666666,
+        "f1-score": 0.8,
+        "support": 3.0
+      },
+      "SIF Precursor (1)": {
+        "precision": 0.8333333333333334,
+        "recall": 1.0,
+        "f1-score": 0.9090909090909091,
+        "support": 5.0
+      },
+      "accuracy": 0.875,
+      "macro avg": {
+        "precision": 0.9166666666666667,
+        "recall": 0.8333333333333333,
+        "f1-score": 0.8545454545454545,
+        "support": 8.0
+      },
+      "weighted avg": {
+        "precision": 0.8958333333333334,
+        "recall": 0.875,
+        "f1-score": 0.8681818181818182,
+        "support": 8.0
+      }
+    }
+  },
+  "training_log": [
+    {
+      "epoch": 1,
+      "train_loss": 0.6804,
+      "val_loss": 0.6863,
+      "val_f2": 0.7692,
+      "val_recall": 0.8
+    },
+    {
+      "epoch": 2,
+      "train_loss": 0.6879,
+      "val_loss": 0.6808,
+      "val_f2": 0.7692,
+      "val_recall": 0.8
+    },
+    {
+      "epoch": 3,
+      "train_loss": 0.665,
+      "val_loss": 0.6717,
+      "val_f2": 0.8,
+      "val_recall": 0.8
+    },
+    {
+      "epoch": 4,
+      "train_loss": 0.664,
+      "val_loss": 0.6516,
+      "val_f2": 0.8333,
+      "val_recall": 0.8
+    },
+    {
+      "epoch": 5,
+      "train_loss": 0.6149,
+      "val_loss": 0.5949,
+      "val_f2": 0.9615,
+      "val_recall": 1.0
+    },
+    {
+      "epoch": 6,
+      "train_loss": 0.5021,
+      "val_loss": 0.5044,
+      "val_f2": 0.9615,
+      "val_recall": 1.0
+    },
+    {
+      "epoch": 7,
+      "train_loss": 0.3707,
+      "val_loss": 0.4103,
+      "val_f2": 0.9615,
+      "val_recall": 1.0
+    },
+    {
+      "epoch": 8,
+      "train_loss": 0.2604,
+      "val_loss": 0.3259,
+      "val_f2": 0.9615,
+      "val_recall": 1.0
+    }
+  ],
+  "checkpoint_best": "C:\\Users\\ronak\\OneDrive\\Desktop\\SIF-Sentinel\\models\\distilbert\\best_checkpoint",
+  "checkpoint_final": "C:\\Users\\ronak\\OneDrive\\Desktop\\SIF-Sentinel\\models\\distilbert\\final_checkpoint"
+}

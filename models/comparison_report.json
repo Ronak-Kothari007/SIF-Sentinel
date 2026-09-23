@@ -1,0 +1,101 @@
+{
+  "schema_version": "1.0",
+  "generated_at": "2026-09-11T15:15:11.157416+00:00",
+  "primary_metric": "f2_score",
+  "evaluation_split": "test",
+  "models": {
+    "baseline": {
+      "name": "TF-IDF + Logistic Regression",
+      "phase": "4",
+      "n_train": 34,
+      "n_test": 8,
+      "test_metrics": {
+        "precision": 0.7143,
+        "recall": 1.0,
+        "f1_score": 0.8333,
+        "f2_score": 0.9259,
+        "roc_auc": 0.8
+      },
+      "confusion_matrix": {
+        "raw": [
+          [
+            1,
+            2
+          ],
+          [
+            0,
+            5
+          ]
+        ],
+        "labels": [
+          "Non-SIF (0)",
+          "SIF Precursor (1)"
+        ],
+        "tn": 1,
+        "fp": 2,
+        "fn": 0,
+        "tp": 5
+      },
+      "threshold": "N/A (hard argmax)"
+    },
+    "distilbert": {
+      "name": "DistilBERT (distilbert-base-uncased fine-tuned)",
+      "phase": "5",
+      "n_train": 34,
+      "n_test": 8,
+      "test_metrics": {
+        "precision": 0.8333,
+        "recall": 1.0,
+        "f1_score": 0.9091,
+        "f2_score": 0.9615,
+        "roc_auc": 0.8667
+      },
+      "confusion_matrix": {
+        "raw": [
+          [
+            2,
+            1
+          ],
+          [
+            0,
+            5
+          ]
+        ],
+        "labels": [
+          "Non-SIF (0)",
+          "SIF Precursor (1)"
+        ],
+        "tn": 2,
+        "fp": 1,
+        "fn": 0,
+        "tp": 5
+      },
+      "threshold": 0.5,
+      "best_epoch": 5,
+      "best_val_f2": 0.9615
+    }
+  },
+  "deltas": {
+    "precision_delta": 0.119,
+    "recall_delta": 0.0,
+    "f1_delta": 0.0758,
+    "f2_delta": 0.0356,
+    "winner_by_f2": "DistilBERT"
+  },
+  "analysis": {
+    "dataset_size_warning": "Both models trained on 34 samples. Results are indicative only. Statistical significance requires 200+ samples per class.",
+    "primary_metric_rationale": "F2 (beta=2) weights recall twice as heavily as precision. A missed SIF precursor (false negative) is far more dangerous than a false alarm in safety classification.",
+    "distilbert_advantages": [
+      "Contextual embeddings capture negation scope (was not, had not been)",
+      "Understands semantic similarity across paraphrased safety language",
+      "Scales better with more data; expected to outperform TF-IDF at N>=200",
+      "Bidirectional attention captures long-range dependencies in reports"
+    ],
+    "baseline_advantages": [
+      "Fully interpretable: LR coefficients reveal which n-grams drive predictions",
+      "Instantaneous inference: < 1ms, no GPU required",
+      "No risk of overfitting on tiny datasets",
+      "Production fallback when DistilBERT service unavailable"
+    ]
+  }
+}

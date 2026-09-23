@@ -1,0 +1,2 @@
+# .gitkeep — trained model checkpoints will be saved here in Phase 2
+# Format: sif_classifier_v{N}.pt + config_v{N}.json + eval_v{N}.json

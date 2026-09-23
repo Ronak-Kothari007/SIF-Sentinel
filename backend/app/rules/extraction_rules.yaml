@@ -1,0 +1,625 @@
+version: "1.0"
+description: >
+  SIF Sentinel - Safety Context & Entity Extraction Rules and Gazetteers.
+  Provides domain-specific dictionaries, aliases, canonical names, and status modifiers
+  for identifying activity, hazard, barrier, barrier status, location, and equipment
+  from industrial and oil & gas safety observation texts.
+last_updated: "2026-09-11"
+schema_version: 1
+
+# ---------------------------------------------------------------------------
+# Activities (Work tasks underway at observation time)
+# ---------------------------------------------------------------------------
+activities:
+  - canonical: "Maintenance"
+    aliases:
+      - "maintenance"
+      - "preventative maintenance"
+      - "repair"
+      - "overhaul"
+      - "servicing"
+      - "motor repair"
+      - "pump maintenance"
+      - "vessel maintenance"
+      - "electrical maintenance"
+
+  - canonical: "Welding"
+    aliases:
+      - "welding"
+      - "tig welding"
+      - "mig welding"
+      - "arc welding"
+      - "weld"
+      - "welder"
+
+  - canonical: "Cutting"
+    aliases:
+      - "cutting"
+      - "torch cutting"
+      - "plasma cutting"
+      - "grinding"
+      - "angle grinder"
+
+  - canonical: "Hot Work"
+    aliases:
+      - "hot work"
+      - "brazing"
+      - "soldering"
+      - "thermal cutting"
+
+  - canonical: "Confined Space Entry"
+    aliases:
+      - "confined space entry"
+      - "vessel entry"
+      - "tank entry"
+      - "entering confined space"
+      - "entering vessel"
+      - "entering storage tank"
+      - "entered confined"
+      - "entered storage tank"
+      - "entered vessel"
+      - "confined space"
+      - "confined storage tank"
+
+  - canonical: "Lifting & Rigging"
+    aliases:
+      - "lifting"
+      - "crane lift"
+      - "rigging"
+      - "hoisting"
+      - "crane operation"
+      - "offloading"
+      - "material handling"
+      - "crane load"
+      - "below crane load"
+
+  - canonical: "Working at Height"
+    aliases:
+      - "working at height"
+      - "elevated work"
+      - "working at 4 metres"
+      - "working at 6 metres"
+      - "working on scaffold"
+      - "top of scaffold"
+      - "scaffold at 6 metres"
+      - "scaffold at 4 metres"
+      - "on scaffold"
+      - "climbing derrick"
+
+  - canonical: "Drilling"
+    aliases:
+      - "drilling"
+      - "tripping pipe"
+      - "drilling rig operation"
+      - "casing operation"
+      - "wireline"
+
+  - canonical: "Inspection & Audit"
+    aliases:
+      - "inspection"
+      - "routine inspection"
+      - "pipeline inspection"
+      - "safety audit"
+      - "ppe audit"
+      - "visual inspection"
+      - "housekeeping inspection"
+
+  - canonical: "Scaffolding"
+    aliases:
+      - "scaffolding"
+      - "scaffold erection"
+      - "scaffold dismantling"
+      - "scaffold assembly"
+      - "scaffolding work"
+
+  - canonical: "Pipe Fitting"
+    aliases:
+      - "pipe fitting"
+      - "flange connection"
+      - "pipe installation"
+      - "bolting"
+      - "pipe work"
+
+  - canonical: "Painting & Blasting"
+    aliases:
+      - "painting"
+      - "sandblasting"
+      - "surface preparation"
+      - "coating"
+
+  - canonical: "Driving & Logistics"
+    aliases:
+      - "driving"
+      - "operating vehicle"
+      - "forklift operation"
+      - "truck driving"
+      - "transport"
+
+  - canonical: "Excavation"
+    aliases:
+      - "excavation"
+      - "trenching"
+      - "digging"
+      - "trench work"
+
+  - canonical: "Housekeeping"
+    aliases:
+      - "housekeeping"
+      - "cleaning"
+      - "spill cleanup"
+      - "debris removal"
+
+  - canonical: "Pre-task Briefing"
+    aliases:
+      - "toolbox meeting"
+      - "pre-task briefing"
+      - "tailgate meeting"
+      - "jsa review"
+      - "safety meeting"
+      - "safety briefing"
+
+  - canonical: "Emergency Response"
+    aliases:
+      - "emergency response"
+      - "evacuation"
+      - "fire response"
+      - "spill response"
+
+# ---------------------------------------------------------------------------
+# Hazards (Primary potential harm sources)
+# ---------------------------------------------------------------------------
+hazards:
+  - canonical: "Electrical Energy"
+    category: "Hazardous Energy"
+    aliases:
+      - "energized equipment"
+      - "electrical energy"
+      - "live circuit"
+      - "live wire"
+      - "high voltage"
+      - "electrocution"
+      - "exposed terminals"
+      - "breaker not locked"
+      - "not de-energized"
+      - "energized"
+      - "electrical"
+
+  - canonical: "Fall from Height"
+    category: "Working at Height"
+    aliases:
+      - "fall from height"
+      - "working at height"
+      - "elevated work at 4 metres"
+      - "elevated work at 6 metres"
+      - "scaffold edge"
+      - "open edge"
+      - "unprotected edge"
+      - "dropped from height"
+
+  - canonical: "Toxic Gas / H2S"
+    category: "Hazardous Atmosphere"
+    aliases:
+      - "h2s"
+      - "toxic gas"
+      - "hydrogen sulfide"
+      - "sour gas"
+      - "gas leak"
+      - "leaking gas"
+      - "flammable vapours"
+      - "hydrocarbon presence"
+      - "gas detected"
+
+  - canonical: "Asphyxiation"
+    category: "Hazardous Atmosphere"
+    aliases:
+      - "asphyxiation"
+      - "oxygen deficiency"
+      - "lack of oxygen"
+      - "enclosed storage room"
+      - "dizziness after working"
+      - "atmospheric hazard"
+
+  - canonical: "Fire / Explosion"
+    category: "Thermal / Chemical"
+    aliases:
+      - "fire"
+      - "explosion"
+      - "ignition"
+      - "ignition source"
+      - "flammable vapours"
+      - "combustible"
+      - "gas cloud"
+      - "flash fire"
+
+  - canonical: "Struck-By"
+    category: "Mechanical / Physical"
+    aliases:
+      - "struck by"
+      - "struck-by"
+      - "falling object"
+      - "below crane load"
+      - "below the load"
+      - "pedestrian was struck"
+      - "struck by the forklift"
+      - "line of fire"
+      - "swinging load"
+
+  - canonical: "Caught Between"
+    category: "Mechanical / Physical"
+    aliases:
+      - "caught between"
+      - "pinch point"
+      - "rotating components"
+      - "crush hazard"
+      - "caught in"
+      - "entanglement"
+
+  - canonical: "Structural Failure"
+    category: "Physical / Structural"
+    aliases:
+      - "structural failure"
+      - "scaffold collapse"
+      - "cracked board"
+      - "unsecured scaffold"
+      - "dropped object"
+      - "integrity failure"
+
+  - canonical: "High Pressure Release"
+    category: "Hazardous Energy"
+    aliases:
+      - "high pressure"
+      - "pressure release"
+      - "relief valve leaking"
+      - "pressurized line"
+      - "pressure build-up"
+
+  - canonical: "Chemical Exposure"
+    category: "Chemical"
+    aliases:
+      - "chemical exposure"
+      - "chemical splash"
+      - "hazardous chemical"
+      - "drum leak"
+      - "acid"
+      - "corrosive"
+
+  - canonical: "Slip / Trip / Fall"
+    category: "Physical / Ergonomic"
+    aliases:
+      - "slip trip"
+      - "oil spill"
+      - "slippery surface"
+      - "trip hazard"
+      - "wet area"
+
+# ---------------------------------------------------------------------------
+# Barriers / Controls (Safeguards protecting against hazards)
+# ---------------------------------------------------------------------------
+barriers:
+  - canonical: "Isolation"
+    category: "Engineering / Procedural"
+    aliases:
+      - "isolation"
+      - "verified isolation"
+      - "lockout tagout"
+      - "lockout"
+      - "tagout"
+      - "loto"
+      - "energy isolation"
+      - "isolation valve"
+      - "breaker lock"
+
+  - canonical: "Gas Testing"
+    category: "Verification / Monitoring"
+    aliases:
+      - "gas test"
+      - "gas testing"
+      - "atmospheric testing"
+      - "atmospheric monitoring"
+      - "gas clearance"
+      - "gas detector"
+      - "h2s monitoring"
+
+  - canonical: "Fall Protection"
+    category: "Physical / Safeguard"
+    aliases:
+      - "fall protection"
+      - "safety harness"
+      - "harness"
+      - "guardrail"
+      - "safety net"
+      - "lanyard"
+      - "anchor point"
+
+  - canonical: "Hot Work Permit"
+    category: "Administrative / Permit"
+    aliases:
+      - "hot work permit"
+      - "work permit"
+      - "permit to work"
+      - "permit"
+      - "ptw"
+
+  - canonical: "Fire Watch"
+    category: "Procedural / Human"
+    aliases:
+      - "fire watch"
+      - "standby person"
+      - "fire extinguisher"
+
+  - canonical: "Exclusion Zone"
+    category: "Physical / Administrative"
+    aliases:
+      - "exclusion zone"
+      - "barricade"
+      - "barricaded area"
+      - "cordoned off"
+      - "warning signs"
+      - "safety tape"
+
+  - canonical: "Machine Guarding"
+    category: "Engineering Safeguard"
+    aliases:
+      - "machine guard"
+      - "guarding"
+      - "protective guard"
+      - "safety barrier"
+      - "cover"
+
+  - canonical: "Entry Permit & Attendant"
+    category: "Administrative / Human"
+    aliases:
+      - "entry permit"
+      - "attendant"
+      - "standby outside"
+      - "standby attendant"
+
+  - canonical: "PPE"
+    category: "Personal Protective Equipment"
+    aliases:
+      - "ppe"
+      - "hard hat"
+      - "safety glasses"
+      - "face shield"
+      - "gloves"
+      - "slip-resistant footwear"
+      - "respirator"
+
+  - canonical: "Ventilation"
+    category: "Engineering Safeguard"
+    aliases:
+      - "ventilation"
+      - "forced air"
+      - "exhaust fan"
+      - "air blower"
+
+  - canonical: "Spotter"
+    category: "Procedural / Human"
+    aliases:
+      - "spotter"
+      - "signal person"
+      - "banksman"
+
+# ---------------------------------------------------------------------------
+# Barrier Status Modifiers & Negations
+# ---------------------------------------------------------------------------
+barrier_status_modifiers:
+  "Not Verified":
+    patterns:
+      - "without verified"
+      - "not verified"
+      - "unverified"
+      - "no verified"
+      - "lacking verification"
+      - "verification missing"
+      - "not confirmed"
+    severity_bias: "critical"
+
+  "Absent":
+    patterns:
+      - "without"
+      - "no"
+      - "absent"
+      - "not applied"
+      - "not used"
+      - "not worn"
+      - "missing"
+      - "not provided"
+      - "not performed"
+      - "not done"
+      - "not conducted"
+      - "lacking"
+      - "omitted"
+      - "not obtained"
+      - "not closed"
+      - "not locked"
+      - "not set up"
+      - "not enforced"
+    severity_bias: "high"
+
+  "Failed":
+    patterns:
+      - "failed"
+      - "compromised"
+      - "broken"
+      - "cracked"
+      - "inadequate"
+      - "defective"
+      - "bypassed"
+      - "damaged"
+      - "unsecured"
+    severity_bias: "high"
+
+  "Present":
+    patterns:
+      - "verified"
+      - "in place"
+      - "applied"
+      - "completed"
+      - "performed"
+      - "present"
+      - "functional"
+      - "active"
+      - "enforced"
+      - "signed off"
+      - "signed"
+      - "provided"
+      - "operated throughout"
+      - "satisfactory"
+      - "tested"
+    severity_bias: "low"
+
+# ---------------------------------------------------------------------------
+# Locations (Physical facility zones)
+# ---------------------------------------------------------------------------
+locations:
+  - canonical: "Tank Farm"
+    aliases:
+      - "tank farm"
+      - "tank farm area"
+
+  - canonical: "Storage Tank"
+    aliases:
+      - "storage tank"
+      - "tank"
+      - "storage vessel"
+
+  - canonical: "Well Site"
+    aliases:
+      - "well site"
+      - "well pad"
+      - "drill site"
+
+  - canonical: "Wellhead"
+    aliases:
+      - "wellhead"
+      - "wellhead area"
+
+  - canonical: "Pump Room / Station"
+    aliases:
+      - "pump room"
+      - "pump station"
+      - "motor room"
+
+  - canonical: "Separator Station"
+    aliases:
+      - "separator station"
+      - "separator vessel"
+      - "separator"
+
+  - canonical: "Process Area"
+    aliases:
+      - "process area"
+      - "process unit"
+      - "process vessel"
+
+  - canonical: "Flare Stack"
+    aliases:
+      - "flare stack"
+      - "flare area"
+
+  - canonical: "Derrick"
+    aliases:
+      - "derrick"
+      - "rig floor"
+
+  - canonical: "Pipe Yard"
+    aliases:
+      - "pipe yard"
+      - "pipe rack"
+
+  - canonical: "Chemical Store"
+    aliases:
+      - "chemical store"
+      - "chemical storage"
+
+  - canonical: "Storage Room"
+    aliases:
+      - "storage room"
+      - "store room"
+
+  - canonical: "Office Block"
+    aliases:
+      - "office block"
+      - "control room corridor"
+      - "facilities"
+
+  - canonical: "Site Road"
+    aliases:
+      - "site road"
+      - "site perimeter"
+      - "roadway"
+
+# ---------------------------------------------------------------------------
+# Equipment (Industrial equipment & components)
+# ---------------------------------------------------------------------------
+equipment:
+  - canonical: "energized equipment"
+    aliases:
+      - "energized equipment"
+      - "live circuit"
+      - "live wire"
+
+  - canonical: "motor control panel"
+    aliases:
+      - "motor control panel"
+      - "electrical panel"
+      - "breaker"
+      - "switchgear"
+
+  - canonical: "drilling rig"
+    aliases:
+      - "drilling rig"
+      - "rig"
+
+  - canonical: "scaffold"
+    aliases:
+      - "scaffold"
+      - "scaffolding"
+      - "6-metre scaffold"
+
+  - canonical: "crane"
+    aliases:
+      - "crane"
+      - "crane load"
+      - "mobile crane"
+
+  - canonical: "forklift"
+    aliases:
+      - "forklift"
+
+  - canonical: "pump"
+    aliases:
+      - "pump"
+      - "rotating components of a pump"
+
+  - canonical: "valve"
+    aliases:
+      - "pressure relief valve"
+      - "isolation valve"
+      - "relief valve"
+      - "valve"
+
+  - canonical: "separator"
+    aliases:
+      - "separator"
+      - "separator vessel"
+
+  - canonical: "gas detector"
+    aliases:
+      - "gas detector"
+      - "gas monitoring equipment"
+
+  - canonical: "chemical drums"
+    aliases:
+      - "chemical drums"
+      - "drums"
+
+  - canonical: "angle grinder"
+    aliases:
+      - "angle grinder"
+      - "grinder"
+
+  - canonical: "flare stack"
+    aliases:
+      - "flare stack"

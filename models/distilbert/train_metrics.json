@@ -1,0 +1,61 @@
+{
+  "split": "train",
+  "n_samples": 34,
+  "n_positive": 19,
+  "n_negative": 15,
+  "threshold_used": 0.5,
+  "metrics": {
+    "precision": 0.95,
+    "recall": 1.0,
+    "f1_score": 0.9744,
+    "f2_score": 0.9896,
+    "roc_auc": 1.0
+  },
+  "confusion_matrix": {
+    "raw": [
+      [
+        14,
+        1
+      ],
+      [
+        0,
+        19
+      ]
+    ],
+    "labels": [
+      "Non-SIF (0)",
+      "SIF Precursor (1)"
+    ],
+    "tn": 14,
+    "fp": 1,
+    "fn": 0,
+    "tp": 19
+  },
+  "classification_report": {
+    "Non-SIF (0)": {
+      "precision": 1.0,
+      "recall": 0.9333333333333333,
+      "f1-score": 0.9655172413793104,
+      "support": 15.0
+    },
+    "SIF Precursor (1)": {
+      "precision": 0.95,
+      "recall": 1.0,
+      "f1-score": 0.9743589743589743,
+      "support": 19.0
+    },
+    "accuracy": 0.9705882352941176,
+    "macro avg": {
+      "precision": 0.975,
+      "recall": 0.9666666666666667,
+      "f1-score": 0.9699381078691424,
+      "support": 34.0
+    },
+    "weighted avg": {
+      "precision": 0.9720588235294116,
+      "recall": 0.9705882352941176,
+      "f1-score": 0.9704582098091227,
+      "support": 34.0
+    }
+  }
+}

@@ -1,0 +1,377 @@
+{
+  "schema_version": "1.0",
+  "phase": "4-baseline",
+  "generated_at": "2026-09-11T15:01:22.098053+00:00",
+  "pipeline": {
+    "vectorizer": "TfidfVectorizer",
+    "classifier": "LogisticRegression",
+    "ngram_range": [
+      1,
+      2
+    ],
+    "max_features": 5000,
+    "sublinear_tf": true,
+    "class_weight": "balanced",
+    "C": 1.0,
+    "solver": "lbfgs",
+    "vocabulary_size": 1084
+  },
+  "data": {
+    "train_path": "C:\\Users\\ronak\\OneDrive\\Desktop\\SIF-Sentinel\\dataset\\processed\\train.csv",
+    "val_path": "C:\\Users\\ronak\\OneDrive\\Desktop\\SIF-Sentinel\\dataset\\processed\\val.csv",
+    "test_path": "C:\\Users\\ronak\\OneDrive\\Desktop\\SIF-Sentinel\\dataset\\processed\\test.csv",
+    "n_train": 34,
+    "n_val": 8,
+    "n_test": 8
+  },
+  "primary_metric": "f2_score",
+  "primary_metric_rationale": "F2 (beta=2) weights recall twice as heavily as precision. In safety classification, a missed SIF precursor (false negative) is significantly more dangerous than a false alarm (false positive).",
+  "baseline_rationale": "TF-IDF + Logistic Regression is the Phase 4 baseline for five reasons: (1) Interpretability -- LR coefficients expose which n-grams drive each class, satisfying safety system explainability requirements. (2) Benchmarking -- sets the performance floor so transformer gains are measurable. (3) Error analysis -- false negatives reveal vocabulary gaps the transformer must cover. (4) Data validation -- near-chance accuracy signals data quality problems cheaply. (5) Production fallback -- serves predictions without GPU dependency.",
+  "train_metrics": {
+    "split": "train",
+    "n_samples": 34,
+    "n_positive": 19,
+    "n_negative": 15,
+    "metrics": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1_score": 1.0,
+      "f2_score": 1.0,
+      "roc_auc": 1.0
+    },
+    "confusion_matrix": {
+      "raw": [
+        [
+          15,
+          0
+        ],
+        [
+          0,
+          19
+        ]
+      ],
+      "labels": [
+        "Non-SIF (0)",
+        "SIF Precursor (1)"
+      ],
+      "tn": 15,
+      "fp": 0,
+      "fn": 0,
+      "tp": 19
+    },
+    "classification_report": {
+      "Non-SIF (0)": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1-score": 1.0,
+        "support": 15.0
+      },
+      "SIF Precursor (1)": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1-score": 1.0,
+        "support": 19.0
+      },
+      "accuracy": 1.0,
+      "macro avg": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1-score": 1.0,
+        "support": 34.0
+      },
+      "weighted avg": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1-score": 1.0,
+        "support": 34.0
+      }
+    }
+  },
+  "val_metrics": {
+    "split": "val",
+    "n_samples": 8,
+    "n_positive": 5,
+    "n_negative": 3,
+    "metrics": {
+      "precision": 0.8333,
+      "recall": 1.0,
+      "f1_score": 0.9091,
+      "f2_score": 0.9615,
+      "roc_auc": 1.0
+    },
+    "confusion_matrix": {
+      "raw": [
+        [
+          2,
+          1
+        ],
+        [
+          0,
+          5
+        ]
+      ],
+      "labels": [
+        "Non-SIF (0)",
+        "SIF Precursor (1)"
+      ],
+      "tn": 2,
+      "fp": 1,
+      "fn": 0,
+      "tp": 5
+    },
+    "classification_report": {
+      "Non-SIF (0)": {
+        "precision": 1.0,
+        "recall": 0.6666666666666666,
+        "f1-score": 0.8,
+        "support": 3.0
+      },
+      "SIF Precursor (1)": {
+        "precision": 0.8333333333333334,
+        "recall": 1.0,
+        "f1-score": 0.9090909090909091,
+        "support": 5.0
+      },
+      "accuracy": 0.875,
+      "macro avg": {
+        "precision": 0.9166666666666667,
+        "recall": 0.8333333333333333,
+        "f1-score": 0.8545454545454545,
+        "support": 8.0
+      },
+      "weighted avg": {
+        "precision": 0.8958333333333334,
+        "recall": 0.875,
+        "f1-score": 0.8681818181818182,
+        "support": 8.0
+      }
+    }
+  },
+  "test_metrics": {
+    "split": "test",
+    "n_samples": 8,
+    "n_positive": 5,
+    "n_negative": 3,
+    "metrics": {
+      "precision": 0.7143,
+      "recall": 1.0,
+      "f1_score": 0.8333,
+      "f2_score": 0.9259,
+      "roc_auc": 0.8
+    },
+    "confusion_matrix": {
+      "raw": [
+        [
+          1,
+          2
+        ],
+        [
+          0,
+          5
+        ]
+      ],
+      "labels": [
+        "Non-SIF (0)",
+        "SIF Precursor (1)"
+      ],
+      "tn": 1,
+      "fp": 2,
+      "fn": 0,
+      "tp": 5
+    },
+    "classification_report": {
+      "Non-SIF (0)": {
+        "precision": 1.0,
+        "recall": 0.3333333333333333,
+        "f1-score": 0.5,
+        "support": 3.0
+      },
+      "SIF Precursor (1)": {
+        "precision": 0.7142857142857143,
+        "recall": 1.0,
+        "f1-score": 0.8333333333333334,
+        "support": 5.0
+      },
+      "accuracy": 0.75,
+      "macro avg": {
+        "precision": 0.8571428571428572,
+        "recall": 0.6666666666666666,
+        "f1-score": 0.6666666666666667,
+        "support": 8.0
+      },
+      "weighted avg": {
+        "precision": 0.8214285714285714,
+        "recall": 0.75,
+        "f1-score": 0.7083333333333334,
+        "support": 8.0
+      }
+    }
+  },
+  "top_features": {
+    "top_sif_precursor_features": [
+      {
+        "feature": "had",
+        "coefficient": 0.2857
+      },
+      {
+        "feature": "was",
+        "coefficient": 0.2504
+      },
+      {
+        "feature": "been",
+        "coefficient": 0.2158
+      },
+      {
+        "feature": "not",
+        "coefficient": 0.2123
+      },
+      {
+        "feature": "fire",
+        "coefficient": 0.192
+      },
+      {
+        "feature": "work",
+        "coefficient": 0.1851
+      },
+      {
+        "feature": "scaffold",
+        "coefficient": 0.1696
+      },
+      {
+        "feature": "drum",
+        "coefficient": 0.1688
+      },
+      {
+        "feature": "was found",
+        "coefficient": 0.167
+      },
+      {
+        "feature": "ignition",
+        "coefficient": 0.1655
+      },
+      {
+        "feature": "permit",
+        "coefficient": 0.1614
+      },
+      {
+        "feature": "metres",
+        "coefficient": 0.1398
+      },
+      {
+        "feature": "present",
+        "coefficient": 0.1389
+      },
+      {
+        "feature": "gas",
+        "coefficient": 0.1366
+      },
+      {
+        "feature": "zone",
+        "coefficient": 0.135
+      },
+      {
+        "feature": "exclusion zone",
+        "coefficient": 0.135
+      },
+      {
+        "feature": "exclusion",
+        "coefficient": 0.135
+      },
+      {
+        "feature": "working",
+        "coefficient": 0.1342
+      },
+      {
+        "feature": "flammable",
+        "coefficient": 0.1335
+      },
+      {
+        "feature": "on the",
+        "coefficient": 0.1334
+      }
+    ],
+    "top_non_sif_features": [
+      {
+        "feature": "all",
+        "coefficient": -0.3386
+      },
+      {
+        "feature": "site",
+        "coefficient": -0.3014
+      },
+      {
+        "feature": "time",
+        "coefficient": -0.2234
+      },
+      {
+        "feature": "injury",
+        "coefficient": -0.2167
+      },
+      {
+        "feature": "station",
+        "coefficient": -0.2164
+      },
+      {
+        "feature": "for",
+        "coefficient": -0.2141
+      },
+      {
+        "feature": "conducted",
+        "coefficient": -0.1903
+      },
+      {
+        "feature": "ppe",
+        "coefficient": -0.1821
+      },
+      {
+        "feature": "emergency",
+        "coefficient": -0.1757
+      },
+      {
+        "feature": "all workers",
+        "coefficient": -0.172
+      },
+      {
+        "feature": "risk",
+        "coefficient": -0.1678
+      },
+      {
+        "feature": "safety",
+        "coefficient": -0.1612
+      },
+      {
+        "feature": "this",
+        "coefficient": -0.1441
+      },
+      {
+        "feature": "found in",
+        "coefficient": -0.1411
+      },
+      {
+        "feature": "incidents",
+        "coefficient": -0.1394
+      },
+      {
+        "feature": "inside the",
+        "coefficient": -0.135
+      },
+      {
+        "feature": "inside",
+        "coefficient": -0.135
+      },
+      {
+        "feature": "operating",
+        "coefficient": -0.1331
+      },
+      {
+        "feature": "area was",
+        "coefficient": -0.1304
+      },
+      {
+        "feature": "officer",
+        "coefficient": -0.1302
+      }
+    ]
+  },
+  "model_path": "C:\\Users\\ronak\\OneDrive\\Desktop\\SIF-Sentinel\\models\\baseline\\baseline_pipeline.joblib"
+}
