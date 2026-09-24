@@ -43,7 +43,7 @@ It processes Unsafe-Act / Unsafe-Condition (UA/UC) reports and Near-Miss reports
 │  │                                                              │   │
 │  │  [1] Text Preprocessor                                       │   │
 │  │       └─ Cleaning, normalization, tokenization               │   │
-│  │  [2] NLP Entity Extractor (spaCy + custom NER)               │   │
+│  │  [2] NLP Entity Extractor (Regex / gazetteers)               │   │
 │  │       └─ Activity, Hazard, Location, Barrier, Equipment      │   │
 │  │  [3] SIF Classifier (DistilBERT fine-tuned)                  │   │
 │  │       └─ Binary: SIF-Precursor | Non-SIF                     │   │
@@ -51,8 +51,8 @@ It processes Unsafe-Act / Unsafe-Condition (UA/UC) reports and Near-Miss reports
 │  │       └─ OIL-specific SIF trigger rules                      │   │
 │  │  [5] Priority Scorer                                         │   │
 │  │       └─ Composite score (model + rules + severity)          │   │
-│  │  [6] Explanation Generator (LIME / attention weights)        │   │
-│  │  [7] Similarity Engine (Sentence Transformers + FAISS)       │   │
+│  │  [6] Explanation Generator (Deterministic attribution)       │   │
+│  │  [7] Similarity Engine (Sentence Transformers + NumPy)       │   │
 │  │       └─ Recurring / similar risk pattern detection          │   │
 │  └──────────────────────────────────────────────────────────────┘   │
 │                                                                      │
@@ -63,7 +63,7 @@ It processes Unsafe-Act / Unsafe-Condition (UA/UC) reports and Near-Miss reports
           │
           ▼
 ┌──────────────────────────────────────────────────────────────────────┐
-│                        DATABASE (PostgreSQL)                         │
+│                        DATABASE (SQLite)                             │
 │                                                                      │
 │   reports | analysis_results | hse_reviews | feedback | embeddings   │
 └──────────────────────────────────────────────────────────────────────┘
@@ -81,9 +81,9 @@ It processes Unsafe-Act / Unsafe-Condition (UA/UC) reports and Near-Miss reports
 | HSE Review Queue | React | List of pending AI-analyzed reports for human review |
 | Review Detail Page | React | AI result + entity highlights + explanation; confirm / reject / correct |
 | Analytics Dashboard | React + Recharts | Trend charts, SIF rate over time, recurring pattern heatmap |
-| Styling | Tailwind CSS | Utility-first, responsive design |
-| HTTP Client | Axios | REST calls to FastAPI backend |
-| State Management | React Query (TanStack) | Server-state synchronization and caching |
+| Styling | Vanilla CSS | Pure CSS without framework overhead |
+| HTTP Client | Native Fetch API | REST calls to FastAPI backend |
+| State Management | React Hooks | Server-state synchronization and caching |
 
 ### 3.2 Backend — `backend/`
 
@@ -98,19 +98,19 @@ It processes Unsafe-Act / Unsafe-Condition (UA/UC) reports and Near-Miss reports
 | Stage | File | Technology |
 |---|---|---|
 | Text Preprocessor | `preprocessor.py` | regex, Python stdlib |
-| Entity Extractor | `entity_extractor.py` | spaCy (`en_core_web_sm`) + custom NER rules |
+| Entity Extractor | `entity_extractor.py` | Regex/Gazetteers + custom rules |
 | SIF Classifier | `classifier.py` | HuggingFace Transformers — DistilBERT fine-tuned |
 | Rule Engine | `rule_engine.py` | Pure Python deterministic rules |
 | Priority Scorer | `scorer.py` | Weighted composite formula |
-| Explainer | `explainer.py` | LIME + attention-weight extraction |
-| Similarity Engine | `similarity.py` | `sentence-transformers` + FAISS (in-process) |
+| Explainer | `decision_engine.py` | Deterministic evidence attribution |
+| Similarity Engine | `similarity.py` | `sentence-transformers` + NumPy (in-memory) |
 
 #### Data Layer — `backend/db/`
 - **SQLAlchemy** ORM with Alembic migrations
-- Async sessions with `asyncpg`
+- Async sessions with `asyncpg` (if scalable) or pure sqlite
 - Repository pattern: one repository class per entity
 
-### 3.3 Database — PostgreSQL
+### 3.3 Database — SQLite
 
 ```sql
 -- Core tables (simplified)
@@ -183,7 +183,7 @@ Raw Report Text
                  ▼
 ┌─────────────────────────────────┐
 │  STAGE 6: Explainer             │
-│  - Top contributing words (LIME)│
+│  - Deterministic evidence factors│
 │  - Which rules fired            │
 │  - Triggered safety categories  │
 └────────────────┬────────────────┘
@@ -192,7 +192,7 @@ Raw Report Text
 ┌─────────────────────────────────┐
 │  STAGE 7: Similarity Engine     │
 │  - Embed report with SBERT      │
-│  - Search FAISS index of past   │
+│  - Search NumPy embeddings of past│
 │    reports                      │
 │  - Return top-k similar reports │
 │    (recurring risk detection)   │
@@ -299,7 +299,6 @@ SIF-Sentinel/
 │   │   ├── classifier.py
 │   │   ├── rule_engine.py
 │   │   ├── scorer.py
-│   │   ├── explainer.py
 │   │   ├── similarity.py
 │   │   └── pipeline.py          # orchestrator
 │   ├── db/
@@ -341,7 +340,6 @@ SIF-Sentinel/
 │   │   ├── App.jsx
 │   │   └── main.jsx
 │   ├── index.html
-│   ├── tailwind.config.js
 │   ├── vite.config.js
 │   └── package.json
 │
@@ -357,8 +355,7 @@ SIF-Sentinel/
 │
 ├── scripts/
 │   ├── seed_db.py
-│   ├── train_model.py
-│   └── build_faiss_index.py
+│   └── train_model.py
 │
 ├── ARCHITECTURE.md
 ├── DEVELOPMENT_PLAN.md
@@ -374,15 +371,15 @@ SIF-Sentinel/
 |---|---|
 | **FastAPI** | Async Python, auto OpenAPI docs, Pydantic validation — ideal for AI backends |
 | **DistilBERT** | 40% smaller than BERT, retains 97% accuracy — runs on CPU for demo |
-| **spaCy** | Industry-standard NLP, fast custom NER, supports domain vocabulary |
+| **Regex/Gazetteers** | Fast, deterministic custom NER, easily supports domain vocabulary |
 | **Sentence Transformers** | State-of-art semantic similarity, pre-trained, no fine-tuning needed for search |
-| **FAISS** | CPU-friendly vector index for in-process similarity search (no external service) |
-| **LIME** | Model-agnostic explainability — critical for HSE officer trust |
-| **PostgreSQL** | Reliable, structured storage; supports pgvector extension if needed later |
+| **NumPy** | CPU-friendly vector index for in-memory similarity search |
+| **Deterministic Explainer** | Clear rule-based evidence attribution — critical for HSE officer trust |
+| **SQLite** | Reliable, structured storage suitable for this scale |
 | **SQLAlchemy + Alembic** | Mature ORM with migration support |
 | **React + Vite** | Fast dev experience, component model fits complex review workflow |
-| **Tailwind CSS** | Rapid, consistent UI without custom CSS overhead |
-| **React Query** | Handles server-state, caching, loading states cleanly |
+| **Vanilla CSS** | Rapid, consistent UI with full control |
+| **React Hooks** | Handles server-state, caching, loading states cleanly |
 
 ---
 
@@ -398,7 +395,7 @@ SIF-Sentinel/
 
 5. **No external AI APIs** — All inference is local. No data leaves the system. This is critical for industrial safety data confidentiality.
 
-6. **Explainability first** — LIME explanations and rule-fire logs are stored alongside every prediction. HSE officers can see exactly why the system raised a flag.
+6. **Explainability first** — Deterministic explanations and rule-fire logs are stored alongside every prediction. HSE officers can see exactly why the system raised a flag.
 
 ---
 

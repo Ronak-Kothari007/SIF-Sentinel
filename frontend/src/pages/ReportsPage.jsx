@@ -12,6 +12,7 @@ import {
   ExternalLink
 } from 'lucide-react';
 import { fetchReports } from '../services/api';
+import { ExportDropdown } from '../components/ui';
 
 export default function ReportsPage({ onSelectReport }) {
   const [reports, setReports] = useState([]);
@@ -81,12 +82,15 @@ export default function ReportsPage({ onSelectReport }) {
       {/* Page Header */}
       <div className="page-header">
         <div>
-          <h2>Safety Observation & Incident Reports</h2>
-          <p>Complete repository of ingested reports with AI precursor classification and barrier status</p>
+          <h2>Reports</h2>
+          <p>All ingested safety observations with AI classification and barrier status.</p>
         </div>
-        <button className="btn btn-outline" onClick={loadReports} title="Reload records">
-          <RefreshCw size={14} /> Refresh Records
-        </button>
+        <div style={{ display: 'flex', gap: '0.5rem' }}>
+          <ExportDropdown filters={{ priority: selectedPriority, hazard: selectedHazard }} />
+          <button className="btn btn-outline" onClick={loadReports} title="Refresh">
+            <RefreshCw size={14} /> Refresh
+          </button>
+        </div>
       </div>
 
       {/* Filter & Search Controls */}
@@ -176,18 +180,8 @@ export default function ReportsPage({ onSelectReport }) {
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap' }}>
                       <span className="mono-id">{report.report_id}</span>
                       {report.report_id && report.report_id.startsWith('DEMO-SYN-') && (
-                        <span 
-                          style={{
-                            fontSize: '0.65rem',
-                            fontWeight: 700,
-                            padding: '0.1rem 0.35rem',
-                            borderRadius: '3px',
-                            backgroundColor: '#e0e7ff',
-                            color: '#3730a3',
-                            border: '1px solid #c7d2fe',
-                            letterSpacing: '0.02em',
-                          }}
-                          title="Synthetic Controlled Demo Record"
+                        <span className="badge-neutral" style={{ fontSize: '0.6rem', padding: '0.1rem 0.3rem' }}
+                          title="Demo record"
                         >
                           DEMO
                         </span>
@@ -213,7 +207,7 @@ export default function ReportsPage({ onSelectReport }) {
 
                   {/* Priority */}
                   <td>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem', alignItems: 'flex-start' }}>
                       <span className={`badge-priority ${report.priority}`}>
                         {report.priority}
                       </span>
@@ -266,23 +260,9 @@ export default function ReportsPage({ onSelectReport }) {
         </table>
       </div>
 
-      {/* Pagination & Count summary */}
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'space-between', 
-        alignItems: 'center', 
-        marginTop: '0.75rem', 
-        fontSize: '0.8rem', 
-        color: '#64748b' 
-      }}>
-        <div>
-          Showing <strong>{filteredReports.length}</strong> of <strong>{totalCount}</strong> reports in repository
-        </div>
-        {filteredReports.length > 0 && (
-          <div>
-            Click any row to open comprehensive HSE decision analysis
-          </div>
-        )}
+      {/* Count summary */}
+      <div style={{ marginTop: 'var(--space-3)', fontSize: 'var(--text-xs)', color: 'var(--text-muted)' }}>
+        Showing <strong>{filteredReports.length}</strong> of <strong>{totalCount}</strong> reports
       </div>
     </div>
   );

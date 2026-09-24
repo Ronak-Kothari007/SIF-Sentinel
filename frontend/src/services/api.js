@@ -5,7 +5,7 @@
  * All metrics, tables, and risk patterns represent real evaluated HSE data.
  */
 
-const API_BASE = '/api/v1';
+export const API_BASE = '/api/v1';
 
 /**
  * Generic fetch wrapper with structured error handling
@@ -241,4 +241,92 @@ export async function resetDemoDataset() {
   });
 }
 
+/**
+ * 15. Upload Document for Import
+ * POST /api/v1/import/upload
+ */
+export async function uploadDocument(file) {
+  const formData = new FormData();
+  formData.append('file', file);
+  
+  try {
+    const res = await fetch(`${API_BASE}/import/upload`, {
+      method: 'POST',
+      body: formData,
+    });
+    if (!res.ok) {
+      let errDetail = await res.text();
+      throw new Error(`Upload failed: ${res.status} ${errDetail}`);
+    }
+    return await res.json();
+  } catch (err) {
+    console.error("Upload API Error:", err);
+    throw err;
+  }
+}
+
+/**
+ * 16. Process Extracted Text
+ * POST /api/v1/import/process-text
+ */
+export async function processImportedText(
+  reportText, 
+  metadata = null, 
+  tempFileId = null, 
+  sourceFileName = null,
+  originalExtractedData = null,
+  userCorrectedData = null
+) {
+  return apiRequest(`/import/process-text`, {
+    method: 'POST',
+    body: JSON.stringify({ 
+      report_text: reportText, 
+      metadata,
+      temp_file_id: tempFileId,
+      source_file_name: sourceFileName,
+      original_extracted_data: originalExtractedData,
+      user_corrected_data: userCorrectedData
+    }),
+  });
+}
+
+/**
+ * 17. Get Export URL
+ * GET /api/v1/export/reports
+ */
+export function getExportUrl({ format = 'csv', exportType = 'current', priority = '', hazard = '', activity = '' } = {}) {
+  const params = new URLSearchParams();
+  params.append('format', format);
+  params.append('export_type', exportType);
+  if (priority) params.append('priority', priority);
+  if (hazard) params.append('hazard', hazard);
+  if (activity) params.append('activity', activity);
+
+  return `${API_BASE}/reports/export/reports?${params.toString()}`;
+}
+
+/**
+ * 18. Fetch Action Center items
+ * GET /api/v1/actions
+ */
+export async function fetchActions(status = null, limit = 50) {
+  const params = new URLSearchParams();
+  if (status) params.append('status', status);
+  params.append('limit', limit);
+  return await apiRequest(`/actions?${params.toString()}`);
+}
+
+/**
+ * 19. Update Action Status
+ * PUT /api/v1/actions/{id}/status
+ */
+export async function updateActionStatus(actionId, status, assignedTo = null) {
+  return await apiRequest(`/actions/${encodeURIComponent(actionId)}/status`, {
+    method: 'PUT',
+    body: JSON.stringify({
+      status,
+      assigned_to: assignedTo || undefined,
+    }),
+  });
+}
 

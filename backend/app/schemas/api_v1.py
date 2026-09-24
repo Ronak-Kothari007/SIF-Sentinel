@@ -430,3 +430,37 @@ class WorkflowStatusResponse(BaseModel):
     display_badge: str
     active_alerts: list[AlertItem] = Field(default_factory=list)
     audit_trail: list[AuditLogItem] = Field(default_factory=list)
+
+
+# ---------------------------------------------------------------------------
+# Action Center Schemas (Phase 16)
+# ---------------------------------------------------------------------------
+
+class ActionItem(BaseModel):
+    """Schema for a trackable HSE Action."""
+    
+    id: str = Field(description="Unique action identifier")
+    report_id: str = Field(description="Associated safety report identifier")
+    title: str = Field(description="Short action title")
+    priority: PriorityLevel = Field(default=PriorityLevel.HIGH, description="Risk priority")
+    status: str = Field(default="Open", description="Status: Open, Assigned, In Progress, Verification, Closed")
+    site_location: Optional[str] = Field(default=None, description="Location context")
+    assigned_to: Optional[str] = Field(default=None, description="Assigned personnel")
+    due_date: Optional[datetime] = Field(default=None, description="Target completion date")
+    created_at: datetime
+    updated_at: datetime
+
+
+class ActionListResponse(BaseModel):
+    """Response for GET /api/v1/actions."""
+    
+    actions: list[ActionItem] = Field(default_factory=list)
+    total: int = Field(description="Total count of actions")
+
+
+class UpdateActionStatusRequest(BaseModel):
+    """Payload for PUT /api/v1/actions/{id}/status."""
+    
+    status: str = Field(description="New status string")
+    assigned_to: Optional[str] = Field(default=None, description="Update assignee")
+

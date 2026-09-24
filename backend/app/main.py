@@ -16,6 +16,7 @@ from fastapi.responses import JSONResponse
 
 from app.api.routes import health, reports
 from app.api.v1 import router as api_v1_router
+from app.api.v1.import_api import router as import_api_router
 from app.core.config import settings
 
 # Configure logging
@@ -143,3 +144,10 @@ app.include_router(reports.router, prefix="/reports", tags=["Reports"])
 
 # Production API v1
 app.include_router(api_v1_router, prefix="/api/v1", tags=["SIF Sentinel API v1"])
+app.include_router(import_api_router, prefix="/api/v1/import", tags=["Import & Extraction"])
+
+from app.api.v1.download_api import router as download_api_router
+app.include_router(download_api_router, prefix="/api/v1/reports", tags=["Downloads"])
+
+from app.api.routes.actions import router as actions_router
+app.include_router(actions_router, prefix="/api/v1/actions", tags=["Action Center"])

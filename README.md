@@ -26,8 +26,8 @@ and routes high-priority reports to Human Safety Expert (HSE) officers for revie
 | **SIF Classification** | DistilBERT model flags potential SIF precursors |
 | **Safety Rule Engine** | Deterministic rules encode domain-specific SIF triggers |
 | **Priority Scoring** | Composite score combining AI + rules → LOW / MEDIUM / HIGH / CRITICAL |
-| **Explainability** | LIME token highlights + fired rules — HSE officers see exactly why |
-| **Similar Reports** | Sentence Transformers + FAISS surfaces recurring risk patterns |
+| **Explainability** | Deterministic multi-factor evidence attribution + fired rules — HSE officers see exactly why |
+| **Similar Reports** | Sentence Transformers + NumPy vector similarity surfaces recurring risk patterns |
 | **HSE Review Workflow** | Officers confirm, reject, or correct every AI result |
 | **Feedback Loop** | All HSE decisions stored for future model retraining |
 | **Analytics Dashboard** | Trends, hazard frequency, SIF rate over time |
@@ -37,7 +37,7 @@ and routes high-priority reports to Human Safety Expert (HSE) officers for revie
 ## Architecture Summary
 
 ```
-[Report Form] → [FastAPI Backend] → [NLP Pipeline] → [PostgreSQL]
+[Report Form] → [FastAPI Backend] → [NLP Pipeline] → [SQLite]
                                           |
              [Preprocessor] → [Entity Extractor] → [SIF Classifier]
                     → [Rule Engine] → [Scorer] → [Explainer] → [Similarity]
@@ -55,23 +55,22 @@ See [ARCHITECTURE.md](./ARCHITECTURE.md) for the full diagram and component brea
 - **Python 3.11+**
 - **FastAPI** — REST API
 - **SQLAlchemy + Alembic** — ORM and migrations
-- **PostgreSQL** — primary database
+- **SQLite** — primary database (in-memory caching for similarity)
 
 ### AI / NLP
 - **Hugging Face Transformers** — DistilBERT for SIF classification
-- **spaCy** — NER entity extraction
+- **Regex/Gazetteers** — entity extraction
 - **Sentence Transformers** — semantic similarity
-- **FAISS** — vector similarity search
-- **LIME** — explainability
+- **NumPy** — in-memory vector similarity search
+- **Deterministic Attribution** — explainability
 - **scikit-learn** — evaluation metrics
 - **PyTorch** — model training
 
 ### Frontend
 - **React + Vite**
-- **Tailwind CSS**
-- **React Query (TanStack)**
+- **Vanilla CSS**
 - **Recharts** — analytics visualizations
-- **Axios** — HTTP client
+- **Native Fetch API** — HTTP client
 
 ---
 
@@ -93,7 +92,7 @@ SIF-Sentinel/
 │   ├── raw/           # public / synthetic datasets
 │   └── processed/
 ├── notebooks/         # EDA, training, evaluation
-├── scripts/           # seed_db, train_model, build_faiss_index
+├── scripts/           # seed_db, train_model
 ├── ARCHITECTURE.md
 ├── DEVELOPMENT_PLAN.md
 └── AI_RULES.md
@@ -106,7 +105,6 @@ SIF-Sentinel/
 ### Prerequisites
 - Python 3.11+
 - Node.js 20+
-- PostgreSQL 15+ (or Docker)
 - Git
 
 ### 1. Clone the repository
@@ -122,7 +120,6 @@ python -m venv venv
 venv\Scripts\activate          # Windows
 # source venv/bin/activate     # Linux/Mac
 pip install -r requirements.txt
-python -m spacy download en_core_web_sm
 ```
 
 ### 3. Configure environment
@@ -133,28 +130,20 @@ cp .env.example .env
 
 ### 4. Database setup
 ```bash
-# Start PostgreSQL (Docker option)
-docker-compose up -d postgres
-
 # Run migrations
 alembic upgrade head
 
-# Seed synthetic data
+# Seed synthetic/demo data
 python scripts/seed_db.py
 ```
 
-### 5. Build FAISS index
-```bash
-python scripts/build_faiss_index.py
-```
-
-### 6. Start backend
+### 5. Start backend
 ```bash
 uvicorn main:app --reload --port 8000
 ```
 API docs available at: `http://localhost:8000/docs`
 
-### 7. Frontend setup
+### 6. Frontend setup
 ```bash
 cd ../frontend
 npm install
@@ -211,10 +200,9 @@ Bands:
 
 ## Important Disclaimers
 
-1. **SIF Sentinel identifies potential precursor signals. It does not predict accidents.**
-2. **All AI outputs require HSE officer validation before any action is taken.**
-3. **Performance metrics are measured on synthetic data. Real-world performance requires validation on OIL's actual historical data.**
-4. **No real OIL confidential data is used in this prototype.**
+1. **SIF Sentinel identifies potential SIF precursor signals and prioritizes safety reports. It does not predict accidents. AI outputs remain subject to HSE validation.**
+2. **Performance metrics are measured on synthetic/demo data. Real-world performance requires validation on actual historical data.**
+3. **No real confidential data is used in this prototype.**
 
 ---
 
@@ -233,8 +221,8 @@ Bands:
 | Role | Responsibility |
 |---|---|
 | Backend Lead | FastAPI, database, pipeline orchestration |
-| AI/ML Lead | DistilBERT training, LIME, rule engine, FAISS |
-| Frontend Lead | React UI, Tailwind, Recharts |
+| AI/ML Lead | DistilBERT training, deterministic attribution, rule engine, vector similarity |
+| Frontend Lead | React UI, Vanilla CSS, Recharts |
 | QA / DevOps | Testing, seed data, documentation |
 
 ---

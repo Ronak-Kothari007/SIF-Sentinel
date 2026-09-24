@@ -21,17 +21,16 @@ The plan is designed so that each phase produces a working, demonstrable system.
 ### Tasks
 - [ ] Initialize Git repository and `.gitignore`
 - [ ] Create `backend/` Python project with `pyproject.toml` or `requirements.txt`
-- [ ] Create `frontend/` with Vite + React + Tailwind CSS scaffold
-- [ ] Set up PostgreSQL (local Docker container)
+- [ ] Create `frontend/` with Vite + React + Vanilla CSS scaffold
+- [ ] Set up SQLite
 - [ ] Set up Alembic for migrations
-- [ ] Write `docker-compose.yml` for Postgres (dev only)
 - [ ] Confirm `uvicorn backend.main:app --reload` starts cleanly
 - [ ] Confirm `npm run dev` starts cleanly
 
 ### Deliverables
 - Running FastAPI at `http://localhost:8000`
 - Running React app at `http://localhost:5173`
-- PostgreSQL accessible on port 5432
+- SQLite database initialized
 - `GET /health` returns `{"status": "ok"}`
 
 ### Acceptance Criteria
@@ -97,11 +96,11 @@ feedback_log
 report_embeddings
   id              UUID PRIMARY KEY
   report_id       UUID REFERENCES reports(id)
-  embedding       FLOAT[]  -- or use pgvector later
+  embedding       JSON  -- or NumPy matrix
 ```
 
 ### Deliverables
-- All tables created in PostgreSQL
+- All tables created in SQLite
 - Seed data loadable via `python scripts/seed_db.py`
 - pytest suite for models and repositories passes
 
@@ -121,7 +120,7 @@ Each stage has unit tests. No API integration yet.
 
 #### Stage 2 — Entity Extractor
 - [ ] `backend/pipeline/entity_extractor.py`
-- [ ] Load spaCy `en_core_web_sm`
+- [ ] Load regex rules and gazetteers
 - [ ] Add custom entity patterns for: ACTIVITY, HAZARD, LOCATION, BARRIER, EQUIPMENT
 - [ ] Return structured dict of extracted entities
 - [ ] Unit tests covering each entity type
@@ -152,7 +151,7 @@ Each stage has unit tests. No API integration yet.
 
 #### Stage 6 — Explainer
 - [ ] `backend/pipeline/explainer.py`
-- [ ] LIME text explainer: top-N contributing words/phrases
+- [ ] Deterministic attribution: map keywords to severity factors
 - [ ] Rule explanation: list of human-readable fired rules
 - [ ] Output: `{lime_tokens: [...], rules_fired: [...], summary: str}`
 - [ ] Unit test: explainer returns valid structure
@@ -160,8 +159,7 @@ Each stage has unit tests. No API integration yet.
 #### Stage 7 — Similarity Engine
 - [ ] `backend/pipeline/similarity.py`
 - [ ] Load `sentence-transformers/all-MiniLM-L6-v2`
-- [ ] Build FAISS flat index over seed report embeddings
-- [ ] Script: `scripts/build_faiss_index.py`
+- [ ] Build NumPy embedding matrix over seed report embeddings
 - [ ] Query: embed new report → top-k similar report IDs + scores
 - [ ] Unit test: returns k results from index
 
@@ -175,7 +173,7 @@ Each stage has unit tests. No API integration yet.
 - All 7 pipeline stages independently tested
 - `pipeline.py` runs end-to-end and returns structured result
 - Fine-tuned DistilBERT checkpoint saved locally
-- FAISS index built from seed data
+- NumPy embeddings built from seed data
 
 ---
 
@@ -224,7 +222,7 @@ Each stage has unit tests. No API integration yet.
 
 #### Layout & Navigation
 - [ ] Top navigation: Submit Report | Review Queue | Analytics
-- [ ] Responsive layout with Tailwind CSS
+- [ ] Responsive layout with Vanilla CSS
 - [ ] Dark/light mode toggle
 
 #### Page 1: Report Submission (`/submit`)
@@ -244,7 +242,7 @@ Each stage has unit tests. No API integration yet.
 - [ ] SIF classification result + confidence badge
 - [ ] Priority score bar (0–1)
 - [ ] Priority band badge (LOW / MEDIUM / HIGH / CRITICAL — color-coded)
-- [ ] Explanation panel: top LIME tokens, fired rules listed
+- [ ] Explanation panel: deterministic evidence factors, fired rules listed
 - [ ] Similar reports panel: up to 5 similar past reports with similarity score
 - [ ] Decision panel: Confirm / Reject / Correct (with correction dropdown and notes)
 - [ ] Submit decision → PATCH /api/reviews/{id}
@@ -259,7 +257,7 @@ Each stage has unit tests. No API integration yet.
 ### Deliverables
 - All 4 pages functional and connected to backend
 - Entity highlighting working
-- Explanation panel renders LIME tokens and rules
+- Explanation panel renders evidence attribution and rules
 - HSE officer can complete a full review workflow
 
 ---
@@ -270,7 +268,7 @@ Each stage has unit tests. No API integration yet.
 ### Tasks
 - [ ] End-to-end integration test: submit report → see result → HSE review → confirm → appears in dashboard
 - [ ] Improve synthetic dataset: 50–100 labeled examples for better classifier demo
-- [ ] Rebuild FAISS index with larger dataset
+- [ ] Rebuild NumPy embeddings with larger dataset
 - [ ] Error handling: API returns proper HTTP codes and messages
 - [ ] Frontend error states: network error, empty states, loading skeletons
 - [ ] Run full `pytest` suite — all tests must pass
@@ -301,7 +299,7 @@ Each stage has unit tests. No API integration yet.
 - [ ] Add honest caveats:
   - Dataset is small and synthetic
   - Real-world performance would require OIL's actual historical data
-  - Model identifies potential precursor signals; it does not predict accidents
+  - SIF Sentinel identifies potential SIF precursor signals and prioritizes safety reports. It does not predict accidents. AI outputs remain subject to HSE validation.
 
 ### Deliverables
 - `notebooks/03_evaluation.ipynb` with real metrics
@@ -339,8 +337,8 @@ A phase is complete when:
 | Role | Responsibilities |
 |---|---|
 | Backend Lead | FastAPI, database, pipeline orchestration |
-| AI/ML Lead | DistilBERT training, LIME, rule engine, FAISS |
-| Frontend Lead | React pages, Tailwind, Recharts, API integration |
+| AI/ML Lead | DistilBERT training, deterministic attribution, rule engine, NumPy similarity |
+| Frontend Lead | React pages, Vanilla CSS, Recharts, API integration |
 | QA / DevOps | pytest, seed data, docker-compose, README |
 
 ---

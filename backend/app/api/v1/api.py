@@ -148,21 +148,26 @@ def list_reports(
     hazard: Optional[str] = Query(default=None, description="Filter by hazard keyword"),
     activity: Optional[str] = Query(default=None, description="Filter by activity keyword"),
 ) -> ReportListResponse:
-    repo = get_repository()
-    reports, total = repo.list_all(
-        limit=limit,
-        offset=offset,
-        priority=priority,
-        hazard=hazard,
-        activity=activity,
-    )
+    from app.db.session import SessionLocal
+    from app.services.db_service import DatabaseService
+    
+    with SessionLocal() as db:
+        prio_str = priority.value if hasattr(priority, "value") else str(priority) if priority else None
+        reports, total = DatabaseService.list_all(
+            db=db,
+            limit=limit,
+            offset=offset,
+            priority=prio_str,
+            hazard=hazard,
+            activity=activity,
+        )
 
-    return ReportListResponse(
-        total=total,
-        limit=limit,
-        offset=offset,
-        items=[r.to_summary_item() for r in reports],
-    )
+        return ReportListResponse(
+            total=total,
+            limit=limit,
+            offset=offset,
+            items=reports,
+        )
 
 
 # ---------------------------------------------------------------------------
@@ -175,34 +180,17 @@ def list_reports(
     description="Retrieve the complete SIF Sentinel decision analysis for a specific report ID.",
 )
 def get_report(id: str) -> DecisionResult:
-    repo = get_repository()
-    stored = repo.get(id)
-    if not stored:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Report with ID '{id}' was not found in the repository.",
-        )
-    if not stored.analysis.report_text:
-        stored.analysis.report_text = stored.report_text
-
-    # Populate human review determination fields side-by-side with original AI output (dual view)
-    res = stored.analysis.model_copy()
-    res.hse_reviewed = stored.hse_reviewed
-    res.review_decision = stored.review_decision
-    res.reviewer_id = stored.reviewer_id
-    res.reviewed_at = stored.reviewed_at
-    res.review_comments = stored.review_comments
-    res.final_priority = stored.final_priority
-    res.final_activity = stored.final_activity
-    res.final_hazard = stored.final_hazard
-    res.final_barrier = stored.final_barrier
-    res.corrected_priority = stored.corrected_priority
-    res.corrected_activity = stored.corrected_activity
-    res.corrected_hazard = stored.corrected_hazard
-    res.corrected_barrier = stored.corrected_barrier
-    res.audit_trail = stored.audit_logs
-    res.feedback_items = stored.feedback_items
-    return res
+    from app.db.session import SessionLocal
+    from app.services.db_service import DatabaseService
+    
+    with SessionLocal() as db:
+        res = DatabaseService.get_decision_result(db, id)
+        if not res:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Report with ID '{id}' was not found in the repository.",
+            )
+        return res
 
 
 # ---------------------------------------------------------------------------
@@ -217,15 +205,17 @@ def get_report(id: str) -> DecisionResult:
 def get_high_risk_reports(
     limit: int = Query(default=50, ge=1, le=100, description="Max items to return"),
 ) -> ReportListResponse:
-    repo = get_repository()
-    high_risk_reports = repo.get_high_risk(limit=limit)
-
-    return ReportListResponse(
-        total=len(high_risk_reports),
-        limit=limit,
-        offset=0,
-        items=[r.to_summary_item() for r in high_risk_reports],
-    )
+    from app.db.session import SessionLocal
+    from app.services.db_service import DatabaseService
+    
+    with SessionLocal() as db:
+        high_risk_reports = DatabaseService.get_high_risk(db, limit=limit)
+        return ReportListResponse(
+            total=len(high_risk_reports),
+            limit=limit,
+            offset=0,
+            items=high_risk_reports,
+        )
 
 
 # ---------------------------------------------------------------------------
@@ -248,13 +238,17 @@ def get_similar_reports(
     ),
 ) -> SimilarReportsResponse:
     repo = get_repository()
+    
+    # Verify report exists
     stored = repo.get(id)
     if not stored:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Report with ID '{id}' was not found in the repository.",
-        )
-
+        from app.db.session import SessionLocal
+        from app.services.db_service import DatabaseService
+        with SessionLocal() as db:
+            if not DatabaseService.get_decision_result(db, id):
+                raise HTTPException(status_code=404, detail="Report not found")
+                
+    # We still use repo for the vector similarity engine
     similar_items = repo.find_similar(id, limit=limit, threshold=threshold)
     return SimilarReportsResponse(
         target_report_id=id,
@@ -274,8 +268,23 @@ def get_similar_reports(
     description="Synthesizes prominent hazard trends, activity hotspots, and recurring barrier failure modes across the site.",
 )
 def get_patterns() -> PatternAnalysisResponse:
-    repo = get_repository()
-    return repo.get_patterns()
+    from app.db.session import SessionLocal
+    from app.services.db_service import DatabaseService
+    
+    with SessionLocal() as db:
+        db_patterns = DatabaseService.get_patterns(db)
+        # We overlay semantic patterns from the in-memory engine
+        repo = get_repository()
+        semantic_patterns = []
+        try:
+            # We need to pass stored_reports to detect_recurring_patterns
+            # Let's bypass this for now if we can't easily fetch all StoredReports
+            semantic_patterns = repo.get_patterns().semantic_patterns
+        except Exception:
+            pass
+            
+        db_patterns["semantic_patterns"] = semantic_patterns
+        return PatternAnalysisResponse(**db_patterns)
 
 
 # ---------------------------------------------------------------------------
@@ -288,95 +297,102 @@ def get_patterns() -> PatternAnalysisResponse:
     description="Record an HSE officer's human verification determination ('confirmed', 'rejected', or 'corrected').",
 )
 def submit_hse_review(payload: HSEReviewRequest) -> HSEReviewResponse:
-    repo = get_repository()
-    updated = repo.add_review(
-        report_id=payload.report_id,
-        reviewer_id=payload.reviewer_id,
-        decision=payload.decision,
-        corrected_priority=payload.corrected_priority,
-        corrected_activity=payload.corrected_activity,
-        corrected_hazard=payload.corrected_hazard,
-        corrected_barrier=payload.corrected_barrier,
-        comments=payload.comments,
-    )
-
-    if not updated:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Cannot record review: Report '{payload.report_id}' does not exist.",
+    from app.db.session import SessionLocal
+    from app.services.db_service import DatabaseService
+    from app.services.workflow_service import AutomatedHSEWorkflow
+    
+    with SessionLocal() as db:
+        # Fetch existing report to get original AI predictions
+        res = DatabaseService.get_decision_result(db, payload.report_id)
+        if not res:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Cannot record review: Report '{payload.report_id}' does not exist.",
+            )
+            
+        final_priority_val = res.priority.value if hasattr(res.priority, "value") else str(res.priority)
+        if payload.decision == "corrected" and payload.corrected_priority:
+            final_priority_val = payload.corrected_priority.value if hasattr(payload.corrected_priority, "value") else str(payload.corrected_priority)
+        elif payload.decision == "rejected":
+            final_priority_val = "LOW"
+            
+        review = DatabaseService.save_hse_review(
+            db=db,
+            report_id=payload.report_id,
+            reviewer_id=payload.reviewer_id,
+            decision=payload.decision,
+            original_priority=res.priority.value if hasattr(res.priority, "value") else str(res.priority),
+            final_priority=final_priority_val,
+            comments=payload.comments,
+            original_activity=res.activity,
+            original_hazard=res.hazard,
+            original_barrier=res.barrier,
+            original_sif_probability=res.sif_probability,
+            corrected_activity=payload.corrected_activity,
+            corrected_hazard=payload.corrected_hazard,
+            corrected_barrier=payload.corrected_barrier,
         )
-
-    logger.info(
-        "HSE review recorded: %s by %s (decision: %s)",
-        payload.report_id,
-        payload.reviewer_id,
-        payload.decision,
-    )
-
-    # Persist in SQLAlchemy Database
-    try:
-        from app.db.session import SessionLocal
-        from app.services.db_service import DatabaseService
-        with SessionLocal() as db:
-            DatabaseService.save_hse_review(
-                db=db,
-                report_id=payload.report_id,
-                reviewer_id=payload.reviewer_id,
-                decision=payload.decision,
-                original_priority=updated.analysis.priority.value if hasattr(updated.analysis.priority, "value") else str(updated.analysis.priority),
-                final_priority=updated.final_priority.value if hasattr(updated.final_priority, "value") else str(updated.final_priority),
-                comments=payload.comments,
-                original_activity=updated.analysis.activity,
-                original_hazard=updated.analysis.hazard,
-                original_barrier=updated.analysis.barrier,
-                original_sif_probability=updated.analysis.sif_probability,
-                corrected_activity=updated.corrected_activity,
-                corrected_hazard=updated.corrected_hazard,
-                corrected_barrier=updated.corrected_barrier,
+        
+        # Reload to get the fresh object
+        updated = DatabaseService.get_decision_result(db, payload.report_id)
+        
+        # Update actual in-memory repo object if available to sync state for tests
+        repo = get_repository()
+        repo_stored = repo.get(payload.report_id)
+        
+        if repo_stored:
+            target_report = repo_stored
+        else:
+            from app.services.report_store import StoredReport
+            target_report = StoredReport(
+                report_id=updated.report_id,
+                report_text=updated.report_text,
+                analysis=updated,
+                final_priority=updated.final_priority,
+                hse_reviewed=True,
+                review_decision=payload.decision
             )
-            from app.services.workflow_service import AutomatedHSEWorkflow
-            AutomatedHSEWorkflow.process_review_resolution(
-                stored_report=updated,
-                decision=payload.decision,
-                reviewer_id=payload.reviewer_id,
-                comments=payload.comments,
-                repo=repo,
-                db=db,
-            )
-    except Exception as e:
-        logger.warning("Database review persistence notice: %s", e)
+        
+        AutomatedHSEWorkflow.process_review_resolution(
+            stored_report=target_report,
+            decision=payload.decision,
+            reviewer_id=payload.reviewer_id,
+            comments=payload.comments,
+            repo=repo,
+            db=db,
+        )
+        
+        original_ai = {
+            "priority": res.priority.value if hasattr(res.priority, "value") else str(res.priority),
+            "activity": res.activity,
+            "hazard": res.hazard,
+            "barrier": res.barrier,
+            "barrier_status": res.barrier_status,
+            "sif_probability": res.sif_probability,
+        }
 
-    original_ai = {
-        "priority": updated.analysis.priority.value if hasattr(updated.analysis.priority, "value") else str(updated.analysis.priority),
-        "activity": updated.analysis.activity,
-        "hazard": updated.analysis.hazard,
-        "barrier": updated.analysis.barrier,
-        "barrier_status": updated.analysis.barrier_status,
-        "sif_probability": updated.analysis.sif_probability,
-    }
-
-    corrected = {
-        "priority": updated.corrected_priority.value if hasattr(updated.corrected_priority, "value") else str(updated.corrected_priority) if updated.corrected_priority else None,
-        "activity": updated.corrected_activity,
-        "hazard": updated.corrected_hazard,
-        "barrier": updated.corrected_barrier,
-    } if payload.decision == "corrected" else None
-
-    return HSEReviewResponse(
-        status="success",
-        message=f"Review successfully recorded by officer {payload.reviewer_id}.",
-        report_id=updated.report_id,
-        reviewed_at=updated.reviewed_at,
-        reviewer_id=payload.reviewer_id,
-        decision=payload.decision,
-        original_ai_output=original_ai,
-        final_priority=updated.final_priority,
-        final_activity=updated.final_activity,
-        final_hazard=updated.final_hazard,
-        final_barrier=updated.final_barrier,
-        corrected_values=corrected,
-        comments=payload.comments,
-    )
+        corrected = {
+            "priority": payload.corrected_priority.value if hasattr(payload.corrected_priority, "value") else str(payload.corrected_priority) if payload.corrected_priority else None,
+            "activity": payload.corrected_activity,
+            "hazard": payload.corrected_hazard,
+            "barrier": payload.corrected_barrier,
+        } if payload.decision == "corrected" else None
+        
+        return HSEReviewResponse(
+            status="success",
+            message=f"Review successfully recorded by officer {payload.reviewer_id}.",
+            report_id=updated.report_id,
+            reviewed_at=review.reviewed_at,
+            reviewer_id=payload.reviewer_id,
+            decision=payload.decision,
+            original_ai_output=original_ai,
+            final_priority=updated.final_priority,
+            final_activity=updated.final_activity,
+            final_hazard=updated.final_hazard,
+            final_barrier=updated.final_barrier,
+            corrected_values=corrected,
+            comments=payload.comments,
+        )
 
 
 # ---------------------------------------------------------------------------
@@ -390,48 +406,36 @@ def submit_hse_review(payload: HSEReviewRequest) -> HSEReviewResponse:
     description="Submit human officer feedback annotations, false positive/negative tags, or model critiques.",
 )
 def submit_feedback(payload: FeedbackRequest) -> FeedbackResponse:
-    repo = get_repository()
-    stored = repo.get(payload.report_id)
-    if not stored:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Cannot record feedback: Report '{payload.report_id}' does not exist.",
-        )
-
-    fb_entry = repo.add_feedback(
-        report_id=payload.report_id,
-        feedback_type=payload.feedback_type,
-        notes=payload.notes,
-        user_suggested_priority=payload.user_suggested_priority,
-        user_id=payload.user_id,
-    )
-
-    # Persist in SQL DB
-    try:
-        from app.db.session import SessionLocal
-        from app.services.db_service import DatabaseService
-        with SessionLocal() as db:
-            DatabaseService.save_feedback(
-                db=db,
-                report_id=payload.report_id,
-                user_id=payload.user_id,
-                feedback_type=payload.feedback_type,
-                notes=payload.notes,
-                user_suggested_priority=payload.user_suggested_priority.value if payload.user_suggested_priority and hasattr(payload.user_suggested_priority, "value") else str(payload.user_suggested_priority) if payload.user_suggested_priority else None,
+    from app.db.session import SessionLocal
+    from app.services.db_service import DatabaseService
+    
+    with SessionLocal() as db:
+        res = DatabaseService.get_decision_result(db, payload.report_id)
+        if not res:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Cannot record feedback: Report '{payload.report_id}' does not exist.",
             )
-    except Exception as e:
-        logger.warning("Database feedback persistence notice: %s", e)
-
-    return FeedbackResponse(
-        status="success",
-        message="Feedback annotation successfully logged in audit trail.",
-        feedback_id=fb_entry["id"],
-        report_id=payload.report_id,
-        feedback_type=payload.feedback_type,
-        user_suggested_priority=payload.user_suggested_priority,
-        notes=payload.notes,
-        created_at=fb_entry["created_at"],
-    )
+            
+        fb = DatabaseService.save_feedback(
+            db=db,
+            report_id=payload.report_id,
+            user_id=payload.user_id,
+            feedback_type=payload.feedback_type,
+            notes=payload.notes,
+            user_suggested_priority=payload.user_suggested_priority.value if payload.user_suggested_priority and hasattr(payload.user_suggested_priority, "value") else str(payload.user_suggested_priority) if payload.user_suggested_priority else None,
+        )
+        
+        return FeedbackResponse(
+            status="success",
+            message="Feedback annotation successfully logged in audit trail.",
+            feedback_id=fb.id,
+            report_id=payload.report_id,
+            feedback_type=payload.feedback_type,
+            user_suggested_priority=payload.user_suggested_priority,
+            notes=payload.notes,
+            created_at=fb.created_at,
+        )
 
 
 @router.get(
@@ -442,8 +446,29 @@ def submit_feedback(payload: FeedbackRequest) -> FeedbackResponse:
 def get_feedback(
     report_id: Optional[str] = Query(default=None, description="Optional target report filter")
 ) -> list[dict[str, Any]]:
-    repo = get_repository()
-    return repo.get_feedback(report_id=report_id)
+    from app.db.session import SessionLocal
+    from app.services.db_service import DatabaseService
+    
+    with SessionLocal() as db:
+        # To avoid adding a complex query, we can just fetch the report or all reports
+        if report_id:
+            feedbacks = DatabaseService.get_feedback_for_report(db, report_id)
+        else:
+            from app.db.models import Feedback
+            feedbacks = db.query(Feedback).order_by(Feedback.created_at.desc()).all()
+            
+        return [
+            {
+                "id": fb.id,
+                "feedback_type": fb.feedback_type,
+                "user_suggested_priority": fb.user_suggested_priority,
+                "notes": fb.notes,
+                "user_id": fb.user_id,
+                "created_at": fb.created_at,
+                "report_id": fb.report_id
+            }
+            for fb in feedbacks
+        ]
 
 
 # ---------------------------------------------------------------------------
@@ -456,33 +481,37 @@ def get_feedback(
     description="Retrieve chronological immutable audit trail for a report, including AI triage, officer reviews, and feedback.",
 )
 def get_report_audit_trail(id: str) -> AuditTrailResponse:
-    repo = get_repository()
-    stored = repo.get(id)
-    if not stored:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Report with ID '{id}' was not found in the repository.",
+    from app.db.session import SessionLocal
+    from app.services.db_service import DatabaseService
+    import json
+    
+    with SessionLocal() as db:
+        res = DatabaseService.get_decision_result(db, id)
+        if not res:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Report with ID '{id}' was not found in the repository.",
+            )
+            
+        logs_data = DatabaseService.get_audit_trail_for_report(db, id)
+        items = [
+            AuditLogItem(
+                id=log.id,
+                action=log.action,
+                entity_type=log.entity_type,
+                entity_id=log.entity_id,
+                actor_id=log.actor_id,
+                details=json.loads(log.details_json) if log.details_json else {},
+                created_at=log.created_at,
+            )
+            for log in logs_data
+        ]
+        
+        return AuditTrailResponse(
+            report_id=id,
+            total_logs=len(items),
+            logs=items,
         )
-
-    logs_data = repo.get_audit_trail(id)
-    items = [
-        AuditLogItem(
-            action=log.get("action", "UNKNOWN"),
-            entity_type=log.get("entity_type", "report"),
-            entity_id=log.get("entity_id", id),
-            actor_id=log.get("actor_id", "system"),
-            details=log.get("details", {}),
-            created_at=log.get("created_at") or stored.created_at,
-        )
-        for log in logs_data
-    ]
-
-    return AuditTrailResponse(
-        report_id=id,
-        total_logs=len(items),
-        logs=items,
-    )
-
 
 
 # ---------------------------------------------------------------------------
@@ -495,8 +524,11 @@ def get_report_audit_trail(id: str) -> AuditTrailResponse:
     description="Returns high-level safety metrics, SIF precursor rates, review queue counts, and top hazard breakdown.",
 )
 def get_dashboard_summary() -> DashboardSummaryResponse:
-    repo = get_repository()
-    return repo.get_dashboard_summary()
+    from app.db.session import SessionLocal
+    from app.services.db_service import DatabaseService
+    
+    with SessionLocal() as db:
+        return DashboardSummaryResponse(**DatabaseService.get_dashboard_summary(db))
 
 
 # ---------------------------------------------------------------------------
@@ -513,13 +545,33 @@ def list_alerts(
     acknowledged: Optional[bool] = Query(default=None, description="Filter by acknowledged boolean status"),
     limit: int = Query(default=50, ge=1, le=200, description="Max alerts to return"),
 ) -> AlertListResponse:
-    repo = get_repository()
-    alerts, total, unacked = repo.get_alerts(acknowledged=acknowledged, limit=limit)
-    return AlertListResponse(
-        alerts=alerts,
-        total=total,
-        unacknowledged_count=unacked,
-    )
+    from app.db.session import SessionLocal
+    from app.services.db_service import DatabaseService
+    
+    with SessionLocal() as db:
+        alerts = DatabaseService.get_alerts(db, acknowledged=acknowledged, limit=limit)
+        unacked = len(DatabaseService.get_alerts(db, acknowledged=False, limit=1000))
+        
+        alert_items = []
+        for a in alerts:
+            alert_items.append(AlertItem(
+                alert_id=a.id,
+                report_id=a.report_id,
+                title=a.title,
+                severity=a.severity,
+                message=a.message,
+                workflow_status=a.workflow_status,
+                acknowledged=a.acknowledged,
+                acknowledged_at=a.acknowledged_at,
+                acknowledged_by=a.acknowledged_by,
+                created_at=a.created_at,
+            ))
+            
+        return AlertListResponse(
+            alerts=alert_items,
+            total=len(alert_items),
+            unacknowledged_count=unacked,
+        )
 
 
 @router.post(
@@ -532,24 +584,30 @@ def acknowledge_alert(
     alert_id: str,
     payload: Optional[AcknowledgeAlertRequest] = None,
 ) -> AlertItem:
-    repo = get_repository()
+    from app.db.session import SessionLocal
+    from app.services.db_service import DatabaseService
+    
     officer_id = payload.officer_id if payload else "HSE-OFFICER-01"
-    alert = repo.acknowledge_alert(alert_id, officer_id=officer_id)
-    if not alert:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Alert with ID '{alert_id}' was not found.",
+    with SessionLocal() as db:
+        alert = DatabaseService.acknowledge_alert(db, alert_id=alert_id, officer_id=officer_id)
+        if not alert:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Alert with ID '{alert_id}' was not found.",
+            )
+            
+        return AlertItem(
+            alert_id=alert.id,
+            report_id=alert.report_id,
+            title=alert.title,
+            severity=alert.severity,
+            message=alert.message,
+            workflow_status=alert.workflow_status,
+            acknowledged=alert.acknowledged,
+            acknowledged_at=alert.acknowledged_at,
+            acknowledged_by=alert.acknowledged_by,
+            created_at=alert.created_at,
         )
-
-    try:
-        from app.db.session import SessionLocal
-        from app.services.db_service import DatabaseService
-        with SessionLocal() as db:
-            DatabaseService.acknowledge_alert(db, alert_id=alert_id, officer_id=officer_id)
-    except Exception as e:
-        logger.warning("DB alert acknowledge notice: %s", e)
-
-    return alert
 
 
 @router.get(
@@ -559,44 +617,62 @@ def acknowledge_alert(
     description="Retrieve automated HSE workflow lifecycle status, timestamps, and active alerts for a safety report.",
 )
 def get_workflow_status(report_id: str) -> WorkflowStatusResponse:
-    repo = get_repository()
-    stored = repo.get(report_id)
-    if not stored:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Report with ID '{report_id}' was not found in the repository.",
-        )
-
+    from app.db.session import SessionLocal
+    from app.services.db_service import DatabaseService
     from app.services.workflow_service import WorkflowStatus
-    alerts, _, _ = repo.get_alerts(limit=100)
-    report_alerts = [a for a in alerts if a.report_id == report_id]
+    import json
+    
+    with SessionLocal() as db:
+        res = DatabaseService.get_decision_result(db, report_id)
+        if not res:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Report with ID '{report_id}' was not found in the repository.",
+            )
+            
+        alerts = DatabaseService.get_alerts(db, limit=100)
+        report_alerts = []
+        for a in alerts:
+            if a.report_id == report_id:
+                report_alerts.append(AlertItem(
+                    alert_id=a.id,
+                    report_id=a.report_id,
+                    title=a.title,
+                    severity=a.severity,
+                    message=a.message,
+                    workflow_status=a.workflow_status,
+                    acknowledged=a.acknowledged,
+                    acknowledged_at=a.acknowledged_at,
+                    acknowledged_by=a.acknowledged_by,
+                    created_at=a.created_at,
+                ))
 
-    audit_logs = [
-        AuditLogItem(
-            action=log.get("action", "UNKNOWN"),
-            entity_type=log.get("entity_type", "report"),
-            entity_id=log.get("entity_id", report_id),
-            actor_id=log.get("actor_id", "system"),
-            details=log.get("details", {}),
-            created_at=log.get("created_at") or stored.created_at,
+        audit_logs = []
+        for log in res.audit_trail:
+            audit_logs.append(AuditLogItem(
+                id=log.get("id"),
+                action=log.get("action", "UNKNOWN"),
+                entity_type=log.get("entity_type", "report"),
+                entity_id=log.get("entity_id", report_id),
+                actor_id=log.get("actor_id", "system"),
+                details=log.get("details", {}),
+                created_at=log.get("created_at") or res.reviewed_at or datetime.now(),
+            ))
+
+        final_p = res.final_priority or res.priority
+        priority_str = final_p.value if hasattr(final_p, "value") else str(final_p)
+
+        return WorkflowStatusResponse(
+            report_id=res.report_id,
+            priority=priority_str,
+            workflow_status=res.workflow_status,
+            in_review_queue=res.in_review_queue,
+            queue_entered_at=res.queue_entered_at,
+            workflow_updated_at=res.queue_entered_at or datetime.now(), # fallback
+            display_badge=WorkflowStatus.get_display_badge(res.workflow_status),
+            active_alerts=report_alerts,
+            audit_trail=audit_logs,
         )
-        for log in stored.audit_logs
-    ]
-
-    final_p = stored.final_priority or stored.analysis.priority
-    priority_str = final_p.value if hasattr(final_p, "value") else str(final_p)
-
-    return WorkflowStatusResponse(
-        report_id=stored.report_id,
-        priority=priority_str,
-        workflow_status=stored.workflow_status,
-        in_review_queue=stored.in_review_queue,
-        queue_entered_at=stored.queue_entered_at,
-        workflow_updated_at=stored.workflow_updated_at,
-        display_badge=WorkflowStatus.get_display_badge(stored.workflow_status),
-        active_alerts=report_alerts,
-        audit_trail=audit_logs,
-    )
 
 
 # ---------------------------------------------------------------------------
@@ -604,4 +680,11 @@ def get_workflow_status(report_id: str) -> WorkflowStatusResponse:
 # ---------------------------------------------------------------------------
 from app.api.v1.demo import router as demo_router
 router.include_router(demo_router)
+
+# ---------------------------------------------------------------------------
+# Action Center Routes (Phase 16)
+# ---------------------------------------------------------------------------
+from app.api.routes.actions import router as actions_router
+router.include_router(actions_router, prefix="/actions", tags=["actions"])
+
 

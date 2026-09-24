@@ -289,7 +289,61 @@ class AutomatedHSEWorkflow:
                     actor_id=reviewer_id,
                     details=audit_details,
                 )
+                
+                # Phase 16: Auto-create Action if HIGH/CRITICAL priority and confirmed/corrected
+                fp = stored_report.final_priority
+                fp_str = fp.value if hasattr(fp, "value") else str(fp)
+                is_high_risk = fp_str.upper() in ("HIGH", "CRITICAL")
+                if is_high_risk and decision_norm in ("confirmed", "corrected"):
+                    barrier_text = getattr(stored_report, 'final_barrier', None) or getattr(stored_report.analysis, 'barrier', None) or 'critical controls'
+                    hazard_text = getattr(stored_report, 'final_hazard', None) or getattr(stored_report.analysis, 'hazard', None) or 'identified hazard'
+                    location_text = getattr(stored_report, 'location', None) or getattr(stored_report.analysis, 'location', 'Unknown') if hasattr(stored_report, 'analysis') else 'Unknown'
+                    action_title = f"Investigate and verify {barrier_text} controls for {hazard_text}"
+                    try:
+                        repo.create_action(
+                            report_id=stored_report.report_id,
+                            title=action_title,
+                            priority=fp_str,
+                            site_location=location_text,
+                            assigned_to=None
+                        )
+                    except Exception as act_e:
+                        logger.warning("Failed to create in-memory action: %s", act_e)
+                    try:
+                        DatabaseService.create_action(
+                            db=db,
+                            report_id=stored_report.report_id,
+                            title=action_title,
+                            priority=fp_str,
+                            site_location=location_text,
+                            assigned_to=None
+                        )
+                        logger.info("Auto-created action for report %s after HSE review (%s)", stored_report.report_id, decision_norm)
+                    except Exception as act_e:
+                        logger.warning("Failed to auto-create DB action: %s", act_e)
+
             except Exception as e:
                 logger.warning("DB workflow resolution notice: %s", e)
 
+        else:
+            # InMemory only (no DB)
+            fp = stored_report.final_priority
+            fp_str = fp.value if hasattr(fp, "value") else str(fp)
+            is_high_risk = fp_str.upper() in ("HIGH", "CRITICAL")
+            if is_high_risk and decision_norm in ("confirmed", "corrected"):
+                barrier_text = getattr(stored_report, 'final_barrier', None) or 'critical controls'
+                hazard_text = getattr(stored_report, 'final_hazard', None) or 'identified hazard'
+                action_title = f"Investigate and verify {barrier_text} controls for {hazard_text}"
+                try:
+                    repo.create_action(
+                        report_id=stored_report.report_id,
+                        title=action_title,
+                        priority=fp_str,
+                        site_location=getattr(stored_report, 'location', 'Unknown'),
+                        assigned_to=None
+                    )
+                except Exception as act_e:
+                    logger.warning("Failed to auto-create action in memory: %s", act_e)
+
         return new_status
+

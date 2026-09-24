@@ -142,6 +142,7 @@ class ReportRepository:
         self._lock = threading.RLock()
         self._reports: dict[str, StoredReport] = {}
         self._alerts: dict[str, AlertItem] = {}
+        self._actions: dict[str, Any] = {}
         self._seeded = False
         self.similarity_engine = similarity_engine or get_similarity_engine()
 
@@ -666,7 +667,63 @@ class ReportRepository:
 
         return loaded
 
+    # ---------------------------------------------------------------------------
+    # Action Center Methods (Phase 16)
+    # ---------------------------------------------------------------------------
 
+    def create_action(
+        self,
+        report_id: str,
+        title: str,
+        priority: PriorityLevel,
+        site_location: Optional[str] = None,
+        assigned_to: Optional[str] = None,
+    ) -> Any:
+        from app.schemas.api_v1 import ActionItem
+        with self._lock:
+            action_id = f"ACT-{uuid.uuid4().hex[:8].upper()}"
+            now = datetime.now(timezone.utc)
+            action = ActionItem(
+                id=action_id,
+                report_id=report_id,
+                title=title,
+                priority=priority,
+                status="Open",
+                site_location=site_location,
+                assigned_to=assigned_to,
+                created_at=now,
+                updated_at=now,
+            )
+            self._actions[action_id] = action
+            return action
+
+    def get_actions(self, limit: int = 50) -> list[Any]:
+        with self._lock:
+            all_acts = sorted(
+                self._actions.values(),
+                key=lambda a: a.created_at,
+                reverse=True,
+            )
+            return all_acts[:limit]
+
+    def update_action_status(
+        self,
+        action_id: str,
+        status: str,
+        assigned_to: Optional[str] = None,
+    ) -> Optional[Any]:
+        with self._lock:
+            action = self._actions.get(action_id)
+            if not action:
+                return None
+            action.status = status
+            if assigned_to is not None:
+                action.assigned_to = assigned_to
+            action.updated_at = datetime.now(timezone.utc)
+            return action
+
+
+# Global singleton repository
 # Global singleton repository
 _repository_instance: Optional[ReportRepository] = None
 
@@ -676,6 +733,32 @@ def get_repository() -> ReportRepository:
     global _repository_instance
     if _repository_instance is None:
         _repository_instance = ReportRepository()
-        # Automatically seed on first call
-        _repository_instance.seed_from_csv()
+        try:
+            from app.db.session import SessionLocal
+            from app.services.db_service import DatabaseService
+            with SessionLocal() as db:
+                reports, _ = DatabaseService.list_all(db, limit=10000)
+                if not reports:
+                    # Fallback to CSV seed if DB is completely empty
+                    _repository_instance.seed_from_csv()
+                else:
+                    # Hydrate from DB
+                    for r in reports:
+                        dec = DatabaseService.get_decision_result(db, r["report_id"])
+                        if dec:
+                            stored = StoredReport(
+                                report_id=dec.report_id,
+                                report_text=dec.report_text or "",
+                                analysis=dec,
+                                final_priority=dec.final_priority or dec.priority,
+                                hse_reviewed=dec.hse_reviewed,
+                                review_decision=dec.review_decision,
+                            )
+                            _repository_instance.save(stored)
+                            _repository_instance._seeded = True
+        except Exception as e:
+            import logging
+            logging.getLogger("sif_sentinel").warning("DB hydration failed: %s", e)
+            _repository_instance.seed_from_csv()
+            
     return _repository_instance

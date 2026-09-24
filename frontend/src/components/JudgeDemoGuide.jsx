@@ -1,111 +1,126 @@
-import React, { useState } from 'react';
-import { 
-  Sparkles, 
-  ChevronRight, 
-  ChevronLeft, 
-  CheckCircle2, 
-  AlertTriangle, 
-  Maximize2, 
-  Minimize2, 
-  RotateCcw,
+import React, { useState, useEffect, useRef } from 'react';
+import {
+  ChevronRight,
+  ChevronLeft,
+  SkipForward,
+  X,
   Play,
-  ArrowRight,
+  LayoutDashboard,
+  FileText,
+  Upload,
+  Search,
   ShieldAlert,
+  AlertTriangle,
+  ArrowUpCircle,
+  UserCheck,
+  CheckCircle2,
+  Zap,
   GitBranch,
-  Layers,
-  History,
-  FileText
+  Download
 } from 'lucide-react';
 
-export const JUDGE_STEPS = [
+export const PRESENTATION_STEPS = [
   {
     step: 1,
-    title: "Open Dashboard",
-    badge: "Executive KPIs",
-    talkingPoint: "Inspect executive safety KPIs: total observations, real-time SIF precursor rate (30-40%), distribution, top hazards, and active alerts.",
+    title: 'Overview',
+    narrative: 'Welcome to SIF Sentinel — an AI-powered industrial precursor risk triage system. The dashboard shows live executive KPIs: total observations, real-time SIF precursor rates, hazard distribution, and active alerts.',
+    icon: LayoutDashboard,
     targetTab: 'dashboard',
+    accent: '#60a5fa',
   },
   {
     step: 2,
-    title: "Show Existing Reports",
-    badge: "Historical Triage",
-    talkingPoint: "Show historical baseline industrial reports. Notice priority badges, NLP entity extractions, and synthetic demo indicators.",
+    title: 'New report arrives',
+    narrative: 'Field observers submit safety observations continuously. The reports list shows each observation with its AI-assigned priority, NLP-extracted entities, and triage status.',
+    icon: FileText,
     targetTab: 'reports',
+    accent: '#818cf8',
   },
   {
     step: 3,
-    title: "Submit a New Safety Report",
-    badge: "Field Narrative",
-    talkingPoint: "Open live analysis modal with the canonical 4160V motor control center electrical isolation observation without LOTO.",
+    title: 'Import or enter report',
+    narrative: 'Open the analysis modal to enter a new safety observation. You can type a narrative directly or import from external systems. Let\'s submit a live observation now.',
+    icon: Upload,
     actionType: 'open_modal',
+    accent: '#a78bfa',
   },
   {
     step: 4,
-    title: "Click Analyze",
-    badge: "Real-Time Pipeline",
-    talkingPoint: "Execute real-time pipeline combining fine-tuned DistilBERT transformer classification and deterministic OSHA/IOGP safety rules.",
+    title: 'Extracted information',
+    narrative: 'The NLP pipeline extracts structured entities: Activity type, Hazard category, Barrier status, and Equipment involved — all from unstructured field narrative text.',
+    icon: Search,
     actionType: 'run_analyze',
+    accent: '#c084fc',
   },
   {
     step: 5,
-    title: "Show AI Result",
-    badge: "Transformer Inference",
-    talkingPoint: "SIF Precursor Probability computed live (~88-92%). Real PyTorch neural model evaluation, zero hardcoded numbers.",
+    title: 'Safety assessment',
+    narrative: 'A fine-tuned DistilBERT transformer computes the SIF Precursor Probability in real time. This is live neural inference — zero hardcoded numbers.',
+    icon: ShieldAlert,
+    accent: '#f472b6',
   },
   {
     step: 6,
-    title: "Show Extracted Context",
-    badge: "NLP Domain Extraction",
-    talkingPoint: "NLP extraction identifies Activity (Maintenance), Hazard (Electrical Energy), and Barrier Status (Lockout Tagout - Absent/Not Verified).",
+    title: 'Critical barrier identified',
+    narrative: 'Deterministic safety rules cross-check the AI prediction. When a critical energy isolation barrier is absent, the rule engine flags it — preventing black-box hallucinations.',
+    icon: AlertTriangle,
+    accent: '#fb923c',
   },
   {
     step: 7,
-    title: "Show Triggered Safety Rule",
-    badge: "Deterministic Rules",
-    talkingPoint: "Deterministic rule RULE_001 (Energy Isolation Failure - Severity 4 Critical) triggers, preventing black-box hallucinations.",
+    title: 'Priority raised',
+    narrative: 'The system assigns HIGH priority based on the combined AI assessment and rule triggers. The report is automatically escalated into the mandatory HSE verification queue.',
+    icon: ArrowUpCircle,
+    targetTab: 'details',
+    accent: '#f87171',
   },
   {
     step: 8,
-    title: "Show Explanation",
-    badge: "Explainability",
-    talkingPoint: "Structured HSE explanation items directly grounded in physical signals: Maintenance detected, Electrical hazard, and LOTO omission.",
+    title: 'HSE review required',
+    narrative: 'The dual-panel review interface preserves the original AI prediction alongside the HSE officer\'s determination. Human-in-the-loop ensures accountability.',
+    icon: UserCheck,
+    targetTab: 'details',
+    accent: '#fb7185',
   },
   {
     step: 9,
-    title: "Show HIGH Priority",
-    badge: "Automated Escalation",
-    talkingPoint: "System assigns HIGH priority and automatically places the report into the mandatory HSE officer verification queue.",
-    targetTab: 'details',
+    title: 'HSE confirms / corrects',
+    narrative: 'The safety officer validates or corrects the AI assessment. The decision is recorded non-destructively — the original prediction is never overwritten.',
+    icon: CheckCircle2,
+    actionType: 'click_confirm',
+    accent: '#34d399',
   },
   {
     step: 10,
-    title: "Show HSE Review",
-    badge: "Human-in-the-Loop",
-    talkingPoint: "Review the dual panel: Original AI model prediction preserved in full alongside HSE officer determination interface.",
-    targetTab: 'details',
+    title: 'Action created',
+    narrative: 'Corrective actions are tracked with assignees, deadlines, and status. Each action links back to the originating safety observation for full traceability.',
+    icon: Zap,
+    targetTab: 'actions',
+    accent: '#fbbf24',
   },
   {
     step: 11,
-    title: "Click CONFIRM",
-    badge: "Officer Validation",
-    talkingPoint: "Safety officer clicks CONFIRM. Validation is registered non-destructively without overwriting the original AI prediction.",
-    actionType: 'click_confirm',
+    title: 'Emerging pattern',
+    narrative: 'Sentence Transformers automatically cluster similar incidents, revealing recurring risk patterns across the site. This observation matches other electrical isolation precursors.',
+    icon: GitBranch,
+    targetTab: 'patterns',
+    accent: '#2dd4bf',
   },
   {
     step: 12,
-    title: "Show Audit Trail",
-    badge: "Regulatory Compliance",
-    talkingPoint: "Immutable audit log records exact timestamp, officer ID (HSE-OFFICER-01), action (HSE_REVIEW), and validation state.",
-    actionType: 'scroll_audit',
-  },
-  {
-    step: 13,
-    title: "Show Recurring Risk Pattern",
-    badge: "Sentence Transformers",
-    talkingPoint: "Sentence Transformers (all-MiniLM-L6-v2) automatically cluster this incident with matching electrical isolation precursors across the site!",
-    targetTab: 'patterns',
+    title: 'Download assessment',
+    narrative: 'Export the full safety assessment as CSV or PDF. All data — AI predictions, HSE reviews, audit trails, and pattern analysis — is available for regulatory reporting.',
+    icon: Download,
+    targetTab: 'dashboard',
+    accent: '#60a5fa',
   },
 ];
+
+// Keep backward compat for any external references
+export const JUDGE_STEPS = PRESENTATION_STEPS;
+
+const TOTAL_STEPS = PRESENTATION_STEPS.length;
+const APPROX_SECONDS_PER_STEP = 25;
 
 export default function JudgeDemoGuide({
   currentStep = 1,
@@ -120,303 +135,245 @@ export default function JudgeDemoGuide({
   isAnalyzed = false,
   onClose,
 }) {
-  const [isMinimized, setIsMinimized] = useState(false);
+  const [isExiting, setIsExiting] = useState(false);
+  const [slideDirection, setSlideDirection] = useState('next');
+  const [isAnimating, setIsAnimating] = useState(false);
+  const overlayRef = useRef(null);
 
-  const stepInfo = JUDGE_STEPS[currentStep - 1] || JUDGE_STEPS[0];
-  const progressPercent = Math.round((currentStep / 13) * 100);
+  const stepInfo = PRESENTATION_STEPS[currentStep - 1] || PRESENTATION_STEPS[0];
+  const StepIcon = stepInfo.icon;
+  const progressPercent = (currentStep / TOTAL_STEPS) * 100;
+  const remainingSteps = TOTAL_STEPS - currentStep;
+  const remainingTime = remainingSteps * APPROX_SECONDS_PER_STEP;
 
-  const handleNext = () => {
-    const next = currentStep < 13 ? currentStep + 1 : 1;
-    executeStepTransition(next);
+  const formatTime = (seconds) => {
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    return m > 0 ? `${m}m ${s}s` : `${s}s`;
   };
 
-  const handlePrev = () => {
-    const prev = currentStep > 1 ? currentStep - 1 : 13;
-    executeStepTransition(prev);
+  const animateTransition = (direction, callback) => {
+    if (isAnimating) return;
+    setSlideDirection(direction);
+    setIsAnimating(true);
+    setTimeout(() => {
+      callback();
+      setTimeout(() => setIsAnimating(false), 50);
+    }, 180);
   };
 
   const executeStepTransition = (stepNum) => {
     onStepChange(stepNum);
-    const target = JUDGE_STEPS[stepNum - 1];
+    const target = PRESENTATION_STEPS[stepNum - 1];
     if (!target) return;
 
     if (target.targetTab && onNavigateTab) {
       onNavigateTab(target.targetTab);
     }
 
-    if (stepNum === 3 && onOpenAnalyzeModal) {
+    if (target.actionType === 'open_modal' && onOpenAnalyzeModal) {
       onOpenAnalyzeModal();
     }
 
-    if (stepNum === 10 || stepNum === 11 || stepNum === 12) {
+    if (stepNum === 7 || stepNum === 8 || stepNum === 9) {
       if (onSelectReport && (!selectedReportId || selectedReportId === '')) {
         onSelectReport('SIH-DEMO-LIVE-01');
       }
       if (onNavigateTab) {
         onNavigateTab('details');
       }
-    }
-
-    if (stepNum === 12) {
-      setTimeout(() => {
-        const auditEl = document.getElementById('audit-trail-section');
-        if (auditEl) {
-          auditEl.scrollIntoView({ behavior: 'smooth' });
-        }
-      }, 150);
+      
+      // Auto-scroll to HSE Review section for steps 8 and 9
+      if (stepNum === 8 || stepNum === 9) {
+        setTimeout(() => {
+          document.getElementById('hse-review-section')?.scrollIntoView({ behavior: 'smooth' });
+        }, 400); // Give React Router time to render
+      } else if (stepNum === 7) {
+        setTimeout(() => {
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }, 400);
+      }
     }
   };
 
-  if (isMinimized) {
-    return (
-      <div 
-        style={{
-          position: 'fixed',
-          bottom: '1.25rem',
-          right: '1.25rem',
-          zIndex: 9999,
-          backgroundColor: '#0f172a',
-          color: '#ffffff',
-          borderRadius: '9999px',
-          padding: '0.5rem 1rem',
-          boxShadow: '0 10px 25px -5px rgba(0,0,0,0.4)',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '0.65rem',
-          cursor: 'pointer',
-          border: '1px solid #3b82f6',
-        }}
-        onClick={() => setIsMinimized(false)}
-        title="Click to expand SIH Judge Demonstration Guide"
-      >
-        <Sparkles size={16} color="#60a5fa" />
-        <span style={{ fontSize: '0.8rem', fontWeight: 700 }}>
-          SIH Demo Flow: Step {currentStep}/13
-        </span>
-        <span style={{ fontSize: '0.75rem', color: '#93c5fd' }}>
-          ({stepInfo.title})
-        </span>
-        <Maximize2 size={14} color="#94a3b8" />
-      </div>
-    );
-  }
+  const handleNext = () => {
+    if (currentStep >= TOTAL_STEPS) return;
+    animateTransition('next', () => executeStepTransition(currentStep + 1));
+  };
+
+  const handlePrev = () => {
+    if (currentStep <= 1) return;
+    animateTransition('prev', () => executeStepTransition(currentStep - 1));
+  };
+
+  const handleSkip = () => {
+    const skipTo = Math.min(currentStep + 2, TOTAL_STEPS);
+    if (skipTo === currentStep) return;
+    animateTransition('next', () => executeStepTransition(skipTo));
+  };
+
+  const handleClose = () => {
+    setIsExiting(true);
+    setTimeout(() => {
+      if (onClose) onClose();
+    }, 280);
+  };
+
+  // Keyboard navigation
+  useEffect(() => {
+    const handler = (e) => {
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.isContentEditable) return;
+      if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+        e.preventDefault();
+        handleNext();
+      } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+        e.preventDefault();
+        handlePrev();
+      } else if (e.key === 'Escape') {
+        e.preventDefault();
+        handleClose();
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [currentStep, isAnimating]);
+
+  // SVG progress ring parameters
+  const ringSize = 36;
+  const ringStroke = 3;
+  const ringRadius = (ringSize - ringStroke) / 2;
+  const ringCircumference = 2 * Math.PI * ringRadius;
+  const ringOffset = ringCircumference - (progressPercent / 100) * ringCircumference;
 
   return (
-    <aside 
-      className="judge-demo-guide"
-      aria-label="SIH Judge Demonstration Guide"
-      style={{
-        backgroundColor: '#0f172a',
-        color: '#f8fafc',
-        borderBottom: '2px solid #2563eb',
-        padding: '0.75rem 1.5rem',
-        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.25)',
-        position: 'relative',
-        zIndex: 40,
-      }}
+    <div
+      ref={overlayRef}
+      className={`presentation-overlay ${isExiting ? 'presentation-overlay--exiting' : ''}`}
+      role="complementary"
+      aria-label="Presentation Mode"
     >
-      <div style={{ maxWidth: '1360px', margin: '0 auto' }}>
-        {/* Top bar with Step Counter, Badges & Minimizer */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '0.5rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.35rem',
-              backgroundColor: '#1e3a8a',
-              color: '#93c5fd',
-              padding: '0.2rem 0.6rem',
-              borderRadius: '9999px',
-              fontSize: '0.75rem',
-              fontWeight: 700,
-              letterSpacing: '0.04em',
-              border: '1px solid #3b82f6',
-            }}>
-              <Sparkles size={13} color="#60a5fa" />
-              <span>SIH JUDGE 5-MIN FLOW</span>
-            </div>
-
-            <span style={{ 
-              fontWeight: 800, 
-              fontSize: '0.9rem', 
-              color: '#ffffff',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.35rem'
-            }}>
-              <span>Step {currentStep} of 13:</span>
-              <span style={{ color: '#60a5fa' }}>{stepInfo.title}</span>
-            </span>
-
-            <span style={{
-              fontSize: '0.7rem',
-              padding: '0.15rem 0.5rem',
-              borderRadius: '4px',
-              backgroundColor: '#1e293b',
-              color: '#cbd5e1',
-              border: '1px solid #334155',
-            }}>
-              {stepInfo.badge}
-            </span>
+      {/* Header row */}
+      <div className="presentation-header">
+        <div className="presentation-header-left">
+          {/* Progress ring */}
+          <div className="presentation-progress-ring-wrapper">
+            <svg width={ringSize} height={ringSize} className="presentation-progress-ring">
+              <circle
+                cx={ringSize / 2}
+                cy={ringSize / 2}
+                r={ringRadius}
+                fill="none"
+                stroke="rgba(255,255,255,0.08)"
+                strokeWidth={ringStroke}
+              />
+              <circle
+                cx={ringSize / 2}
+                cy={ringSize / 2}
+                r={ringRadius}
+                fill="none"
+                stroke={stepInfo.accent}
+                strokeWidth={ringStroke}
+                strokeDasharray={ringCircumference}
+                strokeDashoffset={ringOffset}
+                strokeLinecap="round"
+                className="presentation-progress-ring-fill"
+              />
+            </svg>
+            <span className="presentation-step-number">{currentStep}</span>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <button
-              type="button"
-              className="btn btn-outline"
-              style={{
-                fontSize: '0.75rem',
-                padding: '0.25rem 0.5rem',
-                color: '#94a3b8',
-                borderColor: '#334155',
-                backgroundColor: '#1e293b',
-              }}
-              onClick={() => executeStepTransition(1)}
-              title="Reset flow to Step 1"
-            >
-              <RotateCcw size={12} style={{ marginRight: '3px' }} /> Restart
-            </button>
-
-            <button
-              type="button"
-              className="btn btn-outline"
-              style={{
-                fontSize: '0.75rem',
-                padding: '0.25rem 0.45rem',
-                color: '#94a3b8',
-                borderColor: '#334155',
-                backgroundColor: '#1e293b',
-              }}
-              onClick={() => setIsMinimized(true)}
-              title="Minimize guide to corner badge"
-            >
-              <Minimize2 size={13} />
-            </button>
+          <div className="presentation-title-block">
+            <div className="presentation-label">
+              <Play size={10} />
+              <span>Presentation Mode</span>
+              <span className="presentation-time-remaining">{formatTime(remainingTime)} left</span>
+            </div>
+            <div className="presentation-step-title" style={{ color: stepInfo.accent }}>
+              {stepInfo.title}
+            </div>
           </div>
         </div>
 
-        {/* Step Indicator Pills (1 to 13) */}
-        <div style={{ 
-          display: 'flex', 
-          alignItems: 'center', 
-          gap: '0.25rem', 
-          overflowX: 'auto', 
-          paddingBottom: '0.4rem',
-          marginBottom: '0.5rem',
-          scrollbarWidth: 'none',
-        }}>
-          {JUDGE_STEPS.map((s) => {
-            const isActive = s.step === currentStep;
-            const isCompleted = s.step < currentStep;
-            return (
-              <button
-                key={s.step}
-                type="button"
-                onClick={() => executeStepTransition(s.step)}
-                style={{
-                  background: isActive ? '#2563eb' : isCompleted ? '#1e293b' : '#090d16',
-                  color: isActive ? '#ffffff' : isCompleted ? '#93c5fd' : '#64748b',
-                  border: `1px solid ${isActive ? '#60a5fa' : isCompleted ? '#3b82f6' : '#1e293b'}`,
-                  borderRadius: '4px',
-                  padding: '0.2rem 0.5rem',
-                  fontSize: '0.7rem',
-                  fontWeight: isActive ? 800 : 500,
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.25rem',
-                  whiteSpace: 'nowrap',
-                  transition: 'all 0.15s ease',
-                }}
-                title={`Jump to Step ${s.step}: ${s.title}`}
-              >
-                <span>{s.step}.</span>
-                <span>{s.title}</span>
-                {isCompleted && <CheckCircle2 size={10} color="#60a5fa" />}
-              </button>
-            );
-          })}
-        </div>
-
-        {/* Cues & Action Row */}
-        <div style={{ 
-          display: 'flex', 
-          justifyContent: 'space-between', 
-          alignItems: 'center', 
-          flexWrap: 'wrap', 
-          gap: '0.75rem',
-          backgroundColor: '#1e293b',
-          padding: '0.6rem 0.85rem',
-          borderRadius: '6px',
-          border: '1px solid #334155',
-        }}>
-          <div style={{ flex: 1, minWidth: '280px' }}>
-            <div style={{ fontSize: '0.7rem', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '0.15rem' }}>
-              Judge Speaking Cue / Live Pipeline Point:
-            </div>
-            <div style={{ fontSize: '0.825rem', color: '#f1f5f9', lineHeight: 1.4 }}>
-              "{stepInfo.talkingPoint}"
-            </div>
-          </div>
-
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexShrink: 0 }}>
-            <button
-              type="button"
-              className="btn btn-outline"
-              style={{
-                fontSize: '0.75rem',
-                padding: '0.35rem 0.65rem',
-                color: '#cbd5e1',
-                borderColor: '#475569',
-                backgroundColor: '#0f172a',
-              }}
-              onClick={handlePrev}
-              disabled={currentStep === 1}
-            >
-              <ChevronLeft size={14} /> Back
-            </button>
-
-            {currentStep < 13 ? (
-              <button
-                type="button"
-                id="btn-guide-next"
-                className="btn btn-accent"
-                style={{
-                  fontSize: '0.8rem',
-                  padding: '0.4rem 0.95rem',
-                  fontWeight: 700,
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.35rem',
-                }}
-                onClick={handleNext}
-              >
-                <span>Proceed to Step {currentStep + 1}</span>
-                <ChevronRight size={14} />
-              </button>
-            ) : (
-              <button
-                type="button"
-                id="btn-guide-restart"
-                className="btn btn-primary"
-                style={{
-                  fontSize: '0.8rem',
-                  padding: '0.4rem 0.95rem',
-                  fontWeight: 700,
-                  backgroundColor: '#16a34a',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.35rem',
-                }}
-                onClick={() => executeStepTransition(1)}
-              >
-                <CheckCircle2 size={14} />
-                <span>Demo Complete! (Restart)</span>
-              </button>
-            )}
-          </div>
-        </div>
+        <button
+          className="presentation-close-btn"
+          onClick={handleClose}
+          title="Close Presentation Mode (Esc)"
+          aria-label="Close Presentation Mode"
+        >
+          <X size={14} />
+        </button>
       </div>
-    </aside>
+
+      {/* Step dots timeline */}
+      <div className="presentation-dots">
+        {PRESENTATION_STEPS.map((s) => (
+          <button
+            key={s.step}
+            className={`presentation-dot ${
+              s.step === currentStep ? 'presentation-dot--active' : ''
+            } ${s.step < currentStep ? 'presentation-dot--completed' : ''}`}
+            style={s.step === currentStep ? { backgroundColor: stepInfo.accent, boxShadow: `0 0 6px ${stepInfo.accent}55` } : {}}
+            onClick={() => {
+              const dir = s.step > currentStep ? 'next' : 'prev';
+              animateTransition(dir, () => executeStepTransition(s.step));
+            }}
+            title={`Step ${s.step}: ${s.title}`}
+            aria-label={`Go to step ${s.step}: ${s.title}`}
+          />
+        ))}
+      </div>
+
+      {/* Narrative card */}
+      <div className={`presentation-narrative ${isAnimating ? `presentation-narrative--${slideDirection}` : ''}`}>
+        <div className="presentation-narrative-icon" style={{ color: stepInfo.accent }}>
+          <StepIcon size={16} />
+        </div>
+        <p className="presentation-narrative-text">{stepInfo.narrative}</p>
+      </div>
+
+      {/* Controls */}
+      <div className="presentation-controls">
+        <button
+          className="presentation-btn presentation-btn--secondary"
+          onClick={handlePrev}
+          disabled={currentStep <= 1}
+          title="Previous step"
+        >
+          <ChevronLeft size={14} />
+          <span>Prev</span>
+        </button>
+
+        <button
+          className="presentation-btn presentation-btn--ghost"
+          onClick={handleSkip}
+          disabled={currentStep >= TOTAL_STEPS}
+          title="Skip ahead (+2 steps)"
+        >
+          <SkipForward size={13} />
+          <span>Skip</span>
+        </button>
+
+        {currentStep < TOTAL_STEPS ? (
+          <button
+            className="presentation-btn presentation-btn--primary"
+            onClick={handleNext}
+            title="Next step"
+            style={{ '--btn-accent': stepInfo.accent }}
+          >
+            <span>Next</span>
+            <ChevronRight size={14} />
+          </button>
+        ) : (
+          <button
+            className="presentation-btn presentation-btn--finish"
+            onClick={handleClose}
+            title="End presentation"
+          >
+            <CheckCircle2 size={14} />
+            <span>Finish</span>
+          </button>
+        )}
+      </div>
+    </div>
   );
 }

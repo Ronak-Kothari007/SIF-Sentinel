@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
+import { AnimatePresence } from 'framer-motion';
 import Navbar from './components/Navbar';
 import AnalyzeModal from './components/AnalyzeModal';
 import JudgeDemoGuide from './components/JudgeDemoGuide';
@@ -7,24 +9,48 @@ import ReportsPage from './pages/ReportsPage';
 import ReportDetailsPage from './pages/ReportDetailsPage';
 import RiskPatternsPage from './pages/RiskPatternsPage';
 import HSEReviewPage from './pages/HSEReviewPage';
-import { fetchDashboardSummary, fetchDemoStatus, loadDemoDataset, resetDemoDataset } from './services/api';
-import { CheckCircle2, AlertTriangle, Info } from 'lucide-react';
+import ImportReportsPage from './pages/ImportReportsPage';
+import ActionsPage from './pages/ActionsPage';
+import AnalyticsPage from './pages/AnalyticsPage';
+import { PageTransition, useToast, EmptyState } from './components/ui';
+import { BarChart2, FileText } from 'lucide-react';
+import { fetchDashboardSummary, fetchDemoStatus, loadDemoDataset } from './services/api';
 
 export default function App() {
-  const [currentTab, setCurrentTab] = useState('dashboard');
+  const navigate = useNavigate();
+  const location = useLocation();
+  const toast = useToast();
+
   const [selectedReportId, setSelectedReportId] = useState(null);
   const [pendingReviewCount, setPendingReviewCount] = useState(0);
   const [unreadAlertsCount, setUnreadAlertsCount] = useState(0);
   const [backendOnline, setBackendOnline] = useState(true);
   const [isAnalyzeModalOpen, setIsAnalyzeModalOpen] = useState(false);
-  const [toastMessage, setToastMessage] = useState(null);
   const [demoLoading, setDemoLoading] = useState(false);
   const [isDemoLoaded, setIsDemoLoaded] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
 
-  // 5-Minute SIH Judge Demonstration Flow State
+  // Hidden Presentation Mode State (activated via Ctrl+Shift+P or profile dropdown)
   const [isJudgeDemoActive, setIsJudgeDemoActive] = useState(false);
   const [judgeDemoStep, setJudgeDemoStep] = useState(1);
+
+  // Ctrl+Shift+P keyboard shortcut to toggle Presentation Mode
+  useEffect(() => {
+    const handleKeyboard = (e) => {
+      if (e.ctrlKey && e.shiftKey && (e.key === 'p' || e.key === 'P')) {
+        e.preventDefault();
+        setIsJudgeDemoActive((prev) => {
+          if (!prev) {
+            setJudgeDemoStep(1);
+            navigate('/');
+          }
+          return !prev;
+        });
+      }
+    };
+    window.addEventListener('keydown', handleKeyboard);
+    return () => window.removeEventListener('keydown', handleKeyboard);
+  }, [navigate]);
 
   // Check health and pending counts
   const checkHealthAndCounts = async () => {
@@ -52,14 +78,22 @@ export default function App() {
     checkHealthAndCounts();
     checkDemoStatus();
     const timer = setInterval(checkHealthAndCounts, 15000); // Check every 15s
-    return () => clearInterval(timer);
+    
+    // Listen for manual triggers from other components
+    const handleRefreshAlerts = () => {
+      checkHealthAndCounts();
+      setRefreshKey((k) => k + 1);
+    };
+    window.addEventListener('refresh-alerts', handleRefreshAlerts);
+    
+    return () => {
+      clearInterval(timer);
+      window.removeEventListener('refresh-alerts', handleRefreshAlerts);
+    };
   }, []);
 
-  const showToast = (msg) => {
-    setToastMessage(msg);
-    setTimeout(() => {
-      setToastMessage(null);
-    }, 4500);
+  const showToast = (msg, type = 'success') => {
+    toast[type](msg);
   };
 
   const handleLoadDemo = async () => {
@@ -79,17 +113,17 @@ export default function App() {
 
   const handleSelectReport = (reportId) => {
     setSelectedReportId(reportId);
-    setCurrentTab('details');
-    if (isJudgeDemoActive && (judgeDemoStep < 10 || judgeDemoStep > 12)) {
-      setJudgeDemoStep(10);
+    navigate(`/reports/details`);
+    if (isJudgeDemoActive && (judgeDemoStep < 7 || judgeDemoStep > 9)) {
+      setJudgeDemoStep(7);
     }
   };
 
   const handleBackToReports = () => {
-    setCurrentTab('reports');
+    navigate('/reports');
     setSelectedReportId(null);
     if (isJudgeDemoActive) {
-      setJudgeDemoStep(2);
+      setJudgeDemoStep(1);
     }
   };
 
@@ -98,15 +132,15 @@ export default function App() {
     checkHealthAndCounts();
     setRefreshKey((k) => k + 1);
     if (isJudgeDemoActive) {
-      setJudgeDemoStep(5);
+      setJudgeDemoStep(4);
     }
   };
 
   const handleProceedToReview = (reportId) => {
     setSelectedReportId(reportId);
-    setCurrentTab('details');
+    navigate('/reports/details');
     if (isJudgeDemoActive) {
-      setJudgeDemoStep(10);
+      setJudgeDemoStep(8);
     }
   };
 
@@ -115,24 +149,32 @@ export default function App() {
     checkHealthAndCounts();
     setRefreshKey((k) => k + 1);
     if (isJudgeDemoActive) {
-      setJudgeDemoStep(12); // Advance to Audit Trail step
+      setJudgeDemoStep(9); // Advance to HSE confirms step
     }
   };
 
   const handleStartJudgeDemo = () => {
     setIsJudgeDemoActive((prev) => !prev);
     setJudgeDemoStep(1);
-    setCurrentTab('dashboard');
+    navigate('/');
   };
 
   const handleNavigateTab = (tab) => {
-    setCurrentTab(tab);
+    if (tab === 'dashboard') navigate('/');
+    else if (tab === 'reports') navigate('/reports');
+    else if (tab === 'patterns') navigate('/patterns');
+    else if (tab === 'review') navigate('/review');
+    else if (tab === 'details') navigate('/reports/details');
+    else if (tab === 'actions') navigate('/actions');
+    
     if (tab !== 'details') setSelectedReportId(null);
+    
     if (isJudgeDemoActive) {
       if (tab === 'dashboard') setJudgeDemoStep(1);
       else if (tab === 'reports') setJudgeDemoStep(2);
-      else if (tab === 'patterns') setJudgeDemoStep(13);
-      else if (tab === 'review') setJudgeDemoStep(10);
+      else if (tab === 'patterns') setJudgeDemoStep(11);
+      else if (tab === 'actions') setJudgeDemoStep(10);
+      else if (tab === 'review') setJudgeDemoStep(8);
     }
   };
 
@@ -140,14 +182,12 @@ export default function App() {
     <div className="app-container">
       {/* Navigation Header */}
       <Navbar
-        currentTab={currentTab}
-        setCurrentTab={handleNavigateTab}
         pendingReviewCount={pendingReviewCount}
         unreadAlertsCount={unreadAlertsCount}
         backendOnline={backendOnline}
         onOpenAnalyze={() => {
           setIsAnalyzeModalOpen(true);
-          if (isJudgeDemoActive) setJudgeDemoStep(3);
+          if (isJudgeDemoActive) setJudgeDemoStep(3); // Import or enter report step
         }}
         onLoadDemo={handleLoadDemo}
         demoLoading={demoLoading}
@@ -156,18 +196,18 @@ export default function App() {
         isJudgeDemoActive={isJudgeDemoActive}
       />
 
-      {/* 5-Minute SIH Judge Demonstration Stepper Guide */}
+      {/* Hidden Presentation Mode — floating overlay (activated via Ctrl+Shift+P or profile dropdown) */}
       {isJudgeDemoActive && (
         <JudgeDemoGuide
           currentStep={judgeDemoStep}
           onStepChange={(step) => setJudgeDemoStep(step)}
-          currentTab={currentTab}
+          currentTab={location.pathname}
           onNavigateTab={handleNavigateTab}
           onOpenAnalyzeModal={() => setIsAnalyzeModalOpen(true)}
           selectedReportId={selectedReportId}
           onSelectReport={(id) => {
             setSelectedReportId(id);
-            setCurrentTab('details');
+            navigate('/reports/details');
           }}
           onClose={() => setIsJudgeDemoActive(false)}
         />
@@ -175,35 +215,61 @@ export default function App() {
 
       {/* Main Content Area */}
       <main className="main-content">
-        {currentTab === 'dashboard' && (
-          <DashboardPage
-            key={refreshKey}
-            onNavigateTab={handleNavigateTab}
-            onSelectReport={handleSelectReport}
-          />
-        )}
-
-        {currentTab === 'reports' && (
-          <ReportsPage key={refreshKey} onSelectReport={handleSelectReport} />
-        )}
-
-        {currentTab === 'details' && selectedReportId && (
-          <ReportDetailsPage
-            reportId={selectedReportId}
-            onBack={handleBackToReports}
-            onReviewSubmitted={handleReviewSubmitted}
-            onSelectReport={handleSelectReport}
-            onNavigateTab={handleNavigateTab}
-          />
-        )}
-
-        {currentTab === 'patterns' && (
-          <RiskPatternsPage key={refreshKey} onSelectReport={handleSelectReport} />
-        )}
-
-        {currentTab === 'review' && (
-          <HSEReviewPage key={refreshKey} onSelectReport={handleSelectReport} />
-        )}
+        <AnimatePresence mode="wait">
+          <Routes location={location} key={location.pathname}>
+            <Route path="/" element={
+              <PageTransition key={`dashboard-${refreshKey}`}>
+                <DashboardPage
+                  onNavigateTab={handleNavigateTab}
+                  onSelectReport={handleSelectReport}
+                />
+              </PageTransition>
+            } />
+            <Route path="/reports" element={
+              <PageTransition key={`reports-${refreshKey}`}>
+                <ReportsPage onSelectReport={handleSelectReport} />
+              </PageTransition>
+            } />
+            <Route path="/reports/details" element={
+              selectedReportId ? (
+                <PageTransition key={`details-${selectedReportId}`}>
+                  <ReportDetailsPage
+                    reportId={selectedReportId}
+                    onBack={handleBackToReports}
+                    onReviewSubmitted={handleReviewSubmitted}
+                    onSelectReport={handleSelectReport}
+                    onNavigateTab={handleNavigateTab}
+                  />
+                </PageTransition>
+              ) : (
+                <div style={{ padding: '4rem 2rem' }}>
+                  <EmptyState 
+                    icon={FileText}
+                    title="No Report Selected"
+                    message="Please select a report from the Reports or Review tab to view its details."
+                  />
+                </div>
+              )
+            } />
+            <Route path="/import" element={
+              <PageTransition key={`import-${refreshKey}`}>
+                <ImportReportsPage />
+              </PageTransition>
+            } />
+            <Route path="/patterns" element={
+              <PageTransition key={`patterns-${refreshKey}`}>
+                <RiskPatternsPage onSelectReport={handleSelectReport} />
+              </PageTransition>
+            } />
+            <Route path="/review" element={
+              <PageTransition key={`review-${refreshKey}`}>
+                <HSEReviewPage onSelectReport={handleSelectReport} />
+              </PageTransition>
+            } />
+            <Route path="/actions" element={<PageTransition key="actions"><ActionsPage /></PageTransition>} />
+            <Route path="/analytics" element={<PageTransition key="analytics"><AnalyticsPage /></PageTransition>} />
+          </Routes>
+        </AnimatePresence>
       </main>
 
       {/* Quick Analyze Dialog */}
@@ -213,16 +279,6 @@ export default function App() {
         onAnalysisComplete={handleAnalysisComplete}
         onProceedToReview={handleProceedToReview}
       />
-
-      {/* Toast Notification */}
-      {toastMessage && (
-        <div className="toast-container">
-          <div className="toast">
-            <CheckCircle2 size={16} color="#4ade80" />
-            <span>{toastMessage}</span>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

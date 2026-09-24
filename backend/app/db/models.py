@@ -65,6 +65,8 @@ class Report(Base):
     location = Column(String(100), default="Unknown", nullable=False)
     severity_self_rated = Column(String(50), default="medium", nullable=False)
     source = Column(String(50), default="synthetic", nullable=False)  # synthetic, public, anonymized
+    source_file_name = Column(String(255), nullable=True)
+    source_file_path = Column(String(255), nullable=True)
     submitted_by_user_id = Column(String(36), ForeignKey("users.id"), nullable=True)
     created_at = Column(DateTime(timezone=True), default=_utcnow, nullable=False)
     updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow, nullable=False)
@@ -102,6 +104,7 @@ class Prediction(Base):
     escalated = Column(Boolean, default=False, nullable=False)
     escalation_reason = Column(Text, nullable=True)
     factor_scores_json = Column(Text, nullable=True)
+    structured_explanation_json = Column(Text, nullable=True)
     governance_notice = Column(Text, nullable=False)
     created_at = Column(DateTime(timezone=True), default=_utcnow, nullable=False)
 
@@ -181,7 +184,7 @@ class HSEReview(Base):
 class Feedback(Base):
     __tablename__ = "feedback"
 
-    id = Column(String(36), primary_key=True, default=_gen_uuid)
+    id = Column(String(36), primary_key=True, default=lambda: f"FB-{uuid.uuid4().hex[:8].upper()}")
     report_id = Column(String(50), ForeignKey("reports.id", ondelete="CASCADE"), nullable=False, index=True)
     user_id = Column(String(36), ForeignKey("users.id"), nullable=True)
     feedback_type = Column(String(50), nullable=False)  # false_positive, false_negative, label_correction
@@ -243,3 +246,23 @@ class AlertEvent(Base):
     created_at = Column(DateTime(timezone=True), default=_utcnow, nullable=False)
 
     report = relationship("Report", back_populates="alerts")
+
+
+# ===========================================================================
+# 11. safety_actions Table (Phase 16: Action Center)
+# ===========================================================================
+class SafetyAction(Base):
+    __tablename__ = "safety_actions"
+
+    id = Column(String(36), primary_key=True, default=_gen_uuid)
+    report_id = Column(String(50), ForeignKey("reports.id", ondelete="CASCADE"), nullable=False, index=True)
+    title = Column(String(255), nullable=False)
+    priority = Column(String(20), default="HIGH", nullable=False)
+    status = Column(String(50), default="Open", nullable=False)  # Open, Assigned, In Progress, Verification, Closed
+    site_location = Column(String(100), nullable=True)
+    assigned_to = Column(String(100), nullable=True)
+    due_date = Column(DateTime(timezone=True), nullable=True)
+    created_at = Column(DateTime(timezone=True), default=_utcnow, nullable=False)
+    updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow, nullable=False)
+
+    report = relationship("Report", backref="actions")

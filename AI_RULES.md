@@ -69,7 +69,7 @@ Right:
 
 ### Rule AI-4: All AI Outputs Must Be Explainable
 Every `AnalysisResult` stored in the database must include:
-1. The top contributing words/tokens from the LIME explainer
+1. The deterministic evidence factors triggered
 2. The list of deterministic safety rules that fired
 3. A human-readable summary of why the priority band was assigned
 
@@ -158,7 +158,7 @@ The following public or synthetic data sources are acceptable:
 - All labels logged in a CSV: `data/processed/labels.csv` with rationale column
 
 ### Data Retention
-- Raw reports stored in PostgreSQL indefinitely (for feedback loop)
+- Raw reports stored in SQLite indefinitely (for feedback loop)
 - No report is deleted without explicit user request
 - Data exports include provenance metadata
 
@@ -187,10 +187,10 @@ If the ML classifier fails to load (model file missing, GPU OOM, etc.):
 
 ## 5. Explainability Standards
 
-### LIME Explainer
-- Run LIME with `num_samples=300` minimum
-- Report top-10 contributing tokens
-- Store token weights in `analysis_results.explanation` as JSONB
+### Deterministic Explainer
+- Extract severity evidence from keywords
+- Report top contributing factors
+- Store factor weights in `analysis_results.explanation` as JSONB
 
 ### Rule Explainer
 - Every fired rule must include:
@@ -202,7 +202,7 @@ If the ML classifier fails to load (model file missing, GPU OOM, etc.):
 ### UI Requirement
 The HSE Review Detail page must show:
 - Color-highlighted entity spans in the report text
-- A ranked list of LIME tokens with their positive/negative contribution
+- A ranked list of deterministic evidence factors with their positive/negative contribution
 - A checklist of fired rules with descriptions
 - The priority score formula values (not just the final number)
 
