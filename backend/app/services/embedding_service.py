@@ -45,9 +45,10 @@ class SemanticEmbeddingService:
                 return
                 
             import os
-            # If running on Render (which uses the 512MB free tier), or if explicitly disabled
-            if os.getenv("DISABLE_AI_MODELS", "false").lower() == "true" or os.getenv("RENDER", "false").lower() == "true":
-                logger.info("Cloud environment detected. Bypassing SentenceTransformer to prevent OOM on 512MB instances.")
+            import sys
+            # If running on Render Linux (which uses the 512MB free tier), or if explicitly disabled
+            if os.getenv("DISABLE_AI_MODELS", "false").lower() == "true" or sys.platform == "linux":
+                logger.info("Linux/Cloud environment detected. Bypassing SentenceTransformer to prevent OOM on 512MB instances.")
                 self._model = None
                 self._use_deterministic_fallback = True
                 self._initialized = True
