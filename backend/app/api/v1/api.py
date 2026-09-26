@@ -274,14 +274,14 @@ def get_patterns() -> PatternAnalysisResponse:
     with SessionLocal() as db:
         db_patterns = DatabaseService.get_patterns(db)
         # We overlay semantic patterns from the in-memory engine
-        repo = get_repository()
+        # repo = get_repository()
         semantic_patterns = []
-        try:
-            # We need to pass stored_reports to detect_recurring_patterns
-            # Let's bypass this for now if we can't easily fetch all StoredReports
-            semantic_patterns = repo.get_patterns().semantic_patterns
-        except Exception:
-            pass
+        # try:
+        #     # We need to pass stored_reports to detect_recurring_patterns
+        #     # Let's bypass this for now if we can't easily fetch all StoredReports
+        #     semantic_patterns = repo.get_patterns().semantic_patterns
+        # except Exception:
+        #     pass
             
         db_patterns["semantic_patterns"] = semantic_patterns
         return PatternAnalysisResponse(**db_patterns)
