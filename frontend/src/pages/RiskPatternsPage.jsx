@@ -14,7 +14,7 @@ import {
   ChevronDown,
   ChevronUp,
   Settings2,
-  CheckCircle2
+  CheckCircle
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { fetchPatterns } from '../services/api';
@@ -110,7 +110,7 @@ export default function RiskPatternsPage({ onSelectReport }) {
       <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
         {!patterns?.semantic_patterns || patterns.semantic_patterns.length === 0 ? (
           <div className="empty-state">
-            <CheckCircle2 size={36} color="#16a34a" style={{ marginBottom: '0.75rem' }} />
+            <CheckCircle size={36} color="#16a34a" style={{ marginBottom: '0.75rem' }} />
             <h3>No Emerging Patterns</h3>
             <p style={{ color: '#64748b' }}>No multi-report systemic clusters detected at this time.</p>
           </div>

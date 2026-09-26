@@ -13,7 +13,7 @@ import {
   AlertTriangle,
   ArrowUpCircle,
   UserCheck,
-  CheckCircle2,
+  CheckCircle,
   Zap,
   GitBranch,
   Download
@@ -86,7 +86,7 @@ export const PRESENTATION_STEPS = [
     step: 9,
     title: 'HSE confirms / corrects',
     narrative: 'The safety officer validates or corrects the AI assessment. The decision is recorded non-destructively — the original prediction is never overwritten.',
-    icon: CheckCircle2,
+    icon: CheckCircle,
     actionType: 'click_confirm',
     accent: '#34d399',
   },
@@ -369,7 +369,7 @@ export default function JudgeDemoGuide({
             onClick={handleClose}
             title="End presentation"
           >
-            <CheckCircle2 size={14} />
+            <CheckCircle size={14} />
             <span>Finish</span>
           </button>
         )}

@@ -3,7 +3,7 @@ import {
   X, 
   Play, 
   Sparkles, 
-  CheckCircle2, 
+  CheckCircle, 
   AlertTriangle, 
   ShieldCheck, 
   ArrowRight,
