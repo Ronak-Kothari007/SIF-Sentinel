@@ -9,7 +9,7 @@
   "rewrites": [
     {
       "source": "/api/v1/(.*)",
-      "destination": "https://late-hornets-rescue.loca.lt/api/v1/$1"
+      "destination": "https://sif-sentinel-backend-gu7a.onrender.com/api/v1/$1"
     },
     {
       "source": "/(.*)",
