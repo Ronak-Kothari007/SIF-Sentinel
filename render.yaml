@@ -3,7 +3,7 @@ services:
     name: sif-sentinel-backend
     env: python
     rootDir: backend
-    plan: starter
+    plan: pro
     buildCommand: pip install -r requirements.txt
     startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
     
@@ -24,5 +24,3 @@ services:
         value: "1"
       - key: MKL_NUM_THREADS
         value: "1"
-      - key: DISABLE_AI_MODELS
-        value: "true"
