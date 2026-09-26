@@ -14,6 +14,8 @@ services:
       sizeGB: 1
 
     envVars:
+      - key: PYTHON_VERSION
+        value: 3.10.12
       - key: DATABASE_URL
         value: sqlite:////data/sif_sentinel.db
       - key: ALLOWED_ORIGINS
