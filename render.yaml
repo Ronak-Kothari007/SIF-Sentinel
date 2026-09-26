@@ -1,0 +1,26 @@
+services:
+  - type: web
+    name: sif-sentinel-backend
+    env: python
+    # We specify the backend directory as the root for this service
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    
+    # We need a persistent disk because SQLite stores data in a file. 
+    # Without this, all data is lost every time the app deploys or restarts.
+    disk:
+      name: sif-database
+      mountPath: /data
+      sizeGB: 1
+
+    envVars:
+      # Tell the app to use the persistent disk for the SQLite database
+      - key: DATABASE_URL
+        value: sqlite:////data/sif_sentinel.db
+      
+      # We need to allow requests from the Vercel frontend.
+      # You will need to update this value in the Render Dashboard later
+      # once you know your Vercel URL (e.g., '["https://your-app.vercel.app"]')
+      - key: ALLOWED_ORIGINS
+        value: '["*"]' # Temporarily allow all origins to make setup easy
