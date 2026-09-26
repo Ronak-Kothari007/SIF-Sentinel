@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 import { fetchActions, updateActionStatus } from '../services/api';
 import { 
   CheckCircle, 
@@ -25,6 +26,7 @@ const PRIORITY_COLORS = {
 const STATUS_ORDER = ['Open', 'Assigned', 'In Progress', 'Verification', 'Closed'];
 
 export default function ActionsPage({ onSelectReport }) {
+  const navigate = useNavigate();
   const [actions, setActions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -120,6 +122,7 @@ export default function ActionsPage({ onSelectReport }) {
                 action={action} 
                 onStatusChange={handleStatusChange} 
                 onSelectReport={onSelectReport}
+                navigate={navigate}
               />
             ))}
           </AnimatePresence>
@@ -129,7 +132,7 @@ export default function ActionsPage({ onSelectReport }) {
   );
 }
 
-function ActionCard({ action, onStatusChange, onSelectReport }) {
+function ActionCard({ action, onStatusChange, onSelectReport, navigate }) {
   const getStatusColor = (status) => {
     switch(status) {
       case 'Open': return '#9CA3AF';
@@ -279,12 +282,20 @@ function ActionCard({ action, onStatusChange, onSelectReport }) {
         {action.status !== 'Closed' && (
           <button
             className="btn btn-outline"
-            onClick={() => {
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              console.log("View Details clicked! Report ID:", action.report_id);
               if (onSelectReport && action.report_id) {
                 onSelectReport(action.report_id);
+              } else if (navigate && action.report_id) {
+                navigate('/reports/details', { state: { reportId: action.report_id } });
+              } else {
+                console.error("Missing onSelectReport or report_id", { onSelectReport, id: action.report_id });
+                alert("Cannot navigate: Missing properties.");
               }
             }}
-            style={{ marginLeft: 'auto' }}
+            style={{ marginLeft: 'auto', position: 'relative', zIndex: 10 }}
           >
             View Details
           </button>

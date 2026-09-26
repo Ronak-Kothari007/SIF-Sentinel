@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { 
   ArrowLeft, 
   CheckCircle, 
@@ -28,6 +29,8 @@ import { PriorityBadge, StatusBadge, Skeleton, ErrorState } from '../components/
 import TechnicalAssessmentDrawer from '../components/TechnicalAssessmentDrawer';
 
 export default function ReportDetailsPage({ reportId, onBack, onReviewSubmitted }) {
+  const location = useLocation();
+  const effectiveReportId = reportId || (location.state && location.state.reportId);
   const [report, setReport] = useState(null);
   const [similarReports, setSimilarReports] = useState([]);
   const [auditLogs, setAuditLogs] = useState([]);
@@ -53,9 +56,9 @@ export default function ReportDetailsPage({ reportId, onBack, onReviewSubmitted 
     setError(null);
     try {
       const [data, simRes, auditRes] = await Promise.all([
-        fetchReportById(reportId),
-        fetchSimilarReports(reportId, 3, 0.40).catch(() => ({ similar_reports: [] })),
-        fetchAuditTrail(reportId).catch(() => ({ logs: [] })),
+        fetchReportById(effectiveReportId),
+        fetchSimilarReports(effectiveReportId, 3, 0.40).catch(() => ({ similar_reports: [] })),
+        fetchAuditTrail(effectiveReportId).catch(() => ({ logs: [] })),
       ]);
       setReport(data);
       setSimilarReports(simRes?.similar_reports || []);
@@ -75,8 +78,8 @@ export default function ReportDetailsPage({ reportId, onBack, onReviewSubmitted 
   };
 
   useEffect(() => {
-    if (reportId) loadData();
-  }, [reportId]);
+    if (effectiveReportId) loadData();
+  }, [effectiveReportId]);
 
   const handleReviewSubmit = async () => {
     setActionInProgress(true);
