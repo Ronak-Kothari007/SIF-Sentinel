@@ -43,6 +43,14 @@ class SemanticEmbeddingService:
         with self._lock:
             if self._initialized:
                 return
+                
+            import os
+            if os.getenv("DISABLE_AI_MODELS", "false").lower() == "true":
+                logger.info("DISABLE_AI_MODELS is true. Bypassing SentenceTransformer to save memory.")
+                self._model = None
+                self._use_deterministic_fallback = True
+                self._initialized = True
+                return
 
             try:
                 from sentence_transformers import SentenceTransformer

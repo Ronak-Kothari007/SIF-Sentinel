@@ -20,3 +20,9 @@ services:
         value: sqlite:////data/sif_sentinel.db
       - key: ALLOWED_ORIGINS
         value: '["*"]'
+      - key: OMP_NUM_THREADS
+        value: "1"
+      - key: MKL_NUM_THREADS
+        value: "1"
+      - key: DISABLE_AI_MODELS
+        value: "true"
