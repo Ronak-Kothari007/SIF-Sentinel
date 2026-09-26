@@ -13,7 +13,8 @@ import {
   Activity,
   ChevronDown,
   ChevronUp,
-  Settings2
+  Settings2,
+  CheckCircle2
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { fetchPatterns } from '../services/api';

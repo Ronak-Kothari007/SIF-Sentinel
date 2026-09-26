@@ -266,7 +266,7 @@ export default function App() {
                 <HSEReviewPage onSelectReport={handleSelectReport} />
               </PageTransition>
             } />
-            <Route path="/actions" element={<PageTransition key="actions"><ActionsPage /></PageTransition>} />
+            <Route path="/actions" element={<PageTransition key="actions"><ActionsPage onSelectReport={handleSelectReport} /></PageTransition>} />
             <Route path="/analytics" element={<PageTransition key="analytics"><AnalyticsPage /></PageTransition>} />
           </Routes>
         </AnimatePresence>

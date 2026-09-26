@@ -24,7 +24,7 @@ const PRIORITY_COLORS = {
 
 const STATUS_ORDER = ['Open', 'Assigned', 'In Progress', 'Verification', 'Closed'];
 
-export default function ActionsPage() {
+export default function ActionsPage({ onSelectReport }) {
   const [actions, setActions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -119,6 +119,7 @@ export default function ActionsPage() {
                 key={action.id} 
                 action={action} 
                 onStatusChange={handleStatusChange} 
+                onSelectReport={onSelectReport}
               />
             ))}
           </AnimatePresence>
@@ -128,7 +129,7 @@ export default function ActionsPage() {
   );
 }
 
-function ActionCard({ action, onStatusChange }) {
+function ActionCard({ action, onStatusChange, onSelectReport }) {
   const getStatusColor = (status) => {
     switch(status) {
       case 'Open': return '#9CA3AF';
@@ -279,7 +280,9 @@ function ActionCard({ action, onStatusChange }) {
           <button
             className="btn btn-outline"
             onClick={() => {
-              // Usually navigates to a detail page
+              if (onSelectReport && action.report_id) {
+                onSelectReport(action.report_id);
+              }
             }}
             style={{ marginLeft: 'auto' }}
           >
