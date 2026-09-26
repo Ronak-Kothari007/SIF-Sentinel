@@ -5,7 +5,7 @@
  * All metrics, tables, and risk patterns represent real evaluated HSE data.
  */
 
-export const API_BASE = '/api/v1';
+export const API_BASE = 'https://sif-sentinel-backend-gu7a.onrender.com/api/v1';
 
 /**
  * Generic fetch wrapper with structured error handling
