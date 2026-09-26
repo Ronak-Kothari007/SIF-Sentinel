@@ -15,6 +15,7 @@ async function apiRequest(endpoint, options = {}) {
   const config = {
     headers: {
       'Content-Type': 'application/json',
+      'Bypass-Tunnel-Reminder': 'true',
       ...options.headers,
     },
     ...options,
