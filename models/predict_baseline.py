@@ -92,6 +92,16 @@ class BaselinePredictor:
                 "Run 'python models/train_baseline.py' first."
             )
         self._pipeline = joblib.load(path)
+        
+        # --- Monkey Patch for scikit-learn >= 1.5 compatibility ---
+        try:
+            lr = self._pipeline.named_steps["lr"]
+            if not hasattr(lr, "multi_class"):
+                # Older models expect this attribute which was removed in 1.5
+                lr.multi_class = "auto"
+        except Exception:
+            pass
+            
         self._model_path = path
 
     def predict(self, text: str) -> dict:
