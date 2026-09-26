@@ -3,14 +3,18 @@ services:
     name: sif-sentinel-backend
     env: python
     rootDir: backend
+    plan: starter
     buildCommand: pip install -r requirements.txt
     startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
     
-    # Disk removed so Render does not require a credit card.
-    # Note: SQLite data will reset when the server restarts.
-    
+    # We are adding the persistent disk back so your SQLite data never deletes!
+    disk:
+      name: sif-database
+      mountPath: /data
+      sizeGB: 1
+
     envVars:
       - key: DATABASE_URL
-        value: sqlite:///./sif_sentinel.db
+        value: sqlite:////data/sif_sentinel.db
       - key: ALLOWED_ORIGINS
         value: '["*"]'
